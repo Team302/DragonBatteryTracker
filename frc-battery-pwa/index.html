@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Batteries">
+  <meta name="description" content="FRC Battery Tracker — monitor battery health and usage">
+
+  <title>FRC Battery Tracker</title>
+
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/css/app.css">
+
+  <!-- Config: set your API URL here or via environment injection -->
+  <script>
+    window.API_BASE = "http://localhost:8000"; // ← change this in production
+  </script>
+</head>
+<body>
+  <div id="app">
+    <!-- Rendered by JS -->
+    <div class="scan-splash"><div class="loading-ring"></div></div>
+  </div>
+
+  <nav class="nav-bar">
+    <button class="nav-btn active" id="nav-fleet" onclick="window.location.hash='#dashboard'">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="3" width="7" height="7"/><rect x="15" y="3" width="7" height="7"/>
+        <rect x="2" y="14" width="7" height="7"/><rect x="15" y="14" width="7" height="7"/>
+      </svg>
+      Fleet
+    </button>
+    <button class="nav-btn" id="nav-scan" onclick="startManualScan()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+        <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+        <line x1="7" y1="12" x2="17" y2="12"/>
+      </svg>
+      Scan
+    </button>
+    <button class="nav-btn" id="nav-add" onclick="window.location.hash='#register'">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/>
+        <line x1="8" y1="12" x2="16" y2="12"/>
+      </svg>
+      Add
+    </button>
+  </nav>
+
+  <!-- QR scan modal for the nav bar scan button -->
+  <div id="nav-qr-overlay" class="qr-overlay hidden">
+    <div class="qr-modal">
+      <div class="qr-header">
+        <span>Scan Battery QR / NFC</span>
+        <button id="nav-close-qr">✕</button>
+      </div>
+      <video id="nav-qr-video" playsinline autoplay></video>
+      <canvas id="nav-qr-canvas" hidden></canvas>
+      <p class="qr-hint">Point camera at the QR code on the battery</p>
+    </div>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
+  <script type="module">
+    import { startNfcListener } from "/js/app.js";
+
+    // Nav bar active state
+    window.addEventListener("hashchange", updateNav);
+    updateNav();
+    function updateNav() {
+      const view = window.location.hash.slice(1).split("?")[0] || "dashboard";
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+      if (view === "dashboard") document.getElementById("nav-fleet")?.classList.add("active");
+      if (view === "register") document.getElementById("nav-add")?.classList.add("active");
+    }
+
+    // Nav bar manual QR scan
+    let navStream = null;
+    window.startManualScan = async function() {
+      const overlay = document.getElementById("nav-qr-overlay");
+      const video = document.getElementById("nav-qr-video");
+      const canvas = document.getElementById("nav-qr-canvas");
+      try {
+        navStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        video.srcObject = navStream;
+        overlay.classList.remove("hidden");
+        scanLoop();
+      } catch {
+        alert("Camera access denied.");
+      }
+      function scanLoop() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA && "BarcodeDetector" in window) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          canvas.getContext("2d").drawImage(video, 0, 0);
+          const det = new BarcodeDetector({ formats: ["qr_code"] });
+          det.detect(canvas).then(codes => {
+            if (codes.length) {
+              stopNavScan();
+              const val = codes[0].rawValue;
+              // If the QR value is a URL with /scan/, extract UID
+              try {
+                const u = new URL(val);
+                const parts = u.pathname.split("/scan/");
+                if (parts[1]) { window.location.hash = `#scan?uid=${encodeURIComponent(parts[1])}`; return; }
+              } catch {}
+              window.location.hash = `#scan?uid=${encodeURIComponent(val)}`;
+            }
+          });
+        }
+        requestAnimationFrame(scanLoop);
+      }
+    };
+
+    document.getElementById("nav-close-qr").onclick = stopNavScan;
+    function stopNavScan() {
+      navStream?.getTracks().forEach(t => t.stop());
+      document.getElementById("nav-qr-overlay").classList.add("hidden");
+    }
+  </script>
+</body>
+</html>

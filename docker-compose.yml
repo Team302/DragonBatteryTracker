@@ -1,0 +1,45 @@
+services:
+  db:
+    container_name: postgres
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-frc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-frcpassword}
+      POSTGRES_DB: ${POSTGRES_DB:-frc_batteries}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-frc} -d ${POSTGRES_DB:-frc_batteries}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"  # Remove this line if you don't need direct DB access from host
+
+  api:
+    container_name: frc-battery-tracker-api
+    build: ./frc-battery-tracker
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Overrides .env — uses the db service hostname
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-frc}:${POSTGRES_PASSWORD:-frcpassword}@db:5432/${POSTGRES_DB:-frc_batteries}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  pwa:
+    container_name: frc-battery-tracker-pwa
+    build:
+      context: ./frc-battery-pwa
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
