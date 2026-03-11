@@ -27,27 +27,24 @@
   </div>
 
   <nav class="nav-bar">
-    <button class="nav-btn active" id="nav-fleet" onclick="window.location.hash='#dashboard'">
+    <button class="nav-btn active" id="nav-rotation" onclick="window.location.hash='#rotation'">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/>
+      </svg>
+      Rotation
+    </button>
+    <button class="nav-btn" id="nav-fleet" onclick="window.location.hash='#dashboard'">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="2" y="3" width="7" height="7"/><rect x="15" y="3" width="7" height="7"/>
         <rect x="2" y="14" width="7" height="7"/><rect x="15" y="14" width="7" height="7"/>
       </svg>
       Fleet
     </button>
-    <button class="nav-btn" id="nav-scan" onclick="startManualScan()">
+    <button class="nav-btn" id="nav-comps" onclick="window.location.hash='#competitions'">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
-        <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
-        <line x1="7" y1="12" x2="17" y2="12"/>
+        <path d="M7 2h10v4H7z"/><path d="M5 8h14v13H5z"/><path d="M8 12h8M8 16h6"/>
       </svg>
-      Scan
-    </button>
-    <button class="nav-btn" id="nav-add" onclick="window.location.hash='#register'">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/>
-        <line x1="8" y1="12" x2="16" y2="12"/>
-      </svg>
-      Add
+      Comps
     </button>
     <button class="nav-btn" id="nav-robots" onclick="window.location.hash='#robots'">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -56,6 +53,13 @@
         <circle cx="9" cy="17" r="1"/><circle cx="15" cy="17" r="1"/>
       </svg>
       Robots
+    </button>
+    <button class="nav-btn" id="nav-add" onclick="window.location.hash='#register'">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/>
+        <line x1="8" y1="12" x2="16" y2="12"/>
+      </svg>
+      Add
     </button>
   </nav>
 
@@ -80,9 +84,11 @@
     window.addEventListener("hashchange", updateNav);
     updateNav();
     function updateNav() {
-      const view = window.location.hash.slice(1).split("?")[0] || "dashboard";
+      const view = window.location.hash.slice(1).split("?")[0] || "rotation";
       document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+      if (view === "rotation") document.getElementById("nav-rotation")?.classList.add("active");
       if (view === "dashboard") document.getElementById("nav-fleet")?.classList.add("active");
+      if (view === "competitions") document.getElementById("nav-comps")?.classList.add("active");
       if (view === "register") document.getElementById("nav-add")?.classList.add("active");
       if (view === "robots") document.getElementById("nav-robots")?.classList.add("active");
     }

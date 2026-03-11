@@ -2,11 +2,11 @@ import { api } from "../api.js";
 import { navigate } from "../app.js";
 
 const EVENT_TYPES = [
-  { value: "beak_check", label: "🔬 Beak Check", fields: ["voltage", "ir"] },
-  { value: "charge",     label: "⚡ Charged",     fields: [] },
-  { value: "match",      label: "🏆 Match",       fields: ["match_number"] },
-  { value: "practice",   label: "🔧 Practice",    fields: [] },
-  { value: "incident",   label: "⚠️ Incident",    fields: ["notes"] },
+  { value: "beak_check", label: "🔬 Beak Check", fields: ["beak", "ir"] },
+  { value: "charge", label: "⚡ Charged", fields: [] },
+  { value: "match", label: "🏆 Match", fields: ["match_number"] },
+  { value: "practice", label: "🔧 Practice", fields: [] },
+  { value: "incident", label: "⚠️ Incident", fields: ["notes"] },
 ];
 
 export async function renderLogEvent(container, { id }) {
@@ -19,22 +19,37 @@ export async function renderLogEvent(container, { id }) {
   }
 
   let selectedType = "beak_check";
+  let beakMode = "single";
   let selectedRobotId = null;
+  let selectedCompetitionId = null;
   let robots = [];
+  let activeCompetition = null;
+
   try {
     robots = await api.listRobots(true);
   } catch {
     robots = [];
   }
 
+  try {
+    activeCompetition = await api.getActiveCompetition();
+  } catch {
+    activeCompetition = null;
+  }
+
   function buildForm() {
     const selected = EVENT_TYPES.find((t) => t.value === selectedType);
-    const showVoltage = selected.fields.includes("voltage");
+    const showBeak = selected.fields.includes("beak");
     const showIR = selected.fields.includes("ir");
     const showMatch = selected.fields.includes("match_number");
     const showNotes = selected.fields.includes("notes");
     const showRobot = selectedType === "match" || selectedType === "practice";
+    const showCompetition = selectedType === "match" || selectedType === "practice";
     const robotRequired = selectedType === "match";
+
+    if (showCompetition && activeCompetition && !selectedCompetitionId) {
+      selectedCompetitionId = activeCompetition.id;
+    }
 
     container.innerHTML = `
       <div class="view-header">
@@ -58,21 +73,54 @@ export async function renderLogEvent(container, { id }) {
       </div>
 
       <div id="dynamic-fields">
-        ${showVoltage ? `
+        ${showBeak ? `
           <div class="form-section">
-            <label class="form-label" for="f-voltage">Voltage (V)</label>
-            <input class="form-input" id="f-voltage" type="number" step="0.001" min="0" max="20" placeholder="12.800">
-          </div>` : ""}
+            <label class="form-label">Voltage Mode</label>
+            <div class="segmented-control">
+              <button class="seg-btn ${beakMode === "single" ? "selected" : ""}" data-beak-mode="single" type="button">Single reading</button>
+              <button class="seg-btn ${beakMode === "full" ? "selected" : ""}" data-beak-mode="full" type="button">Full load test</button>
+            </div>
+          </div>
+          ${beakMode === "single" ? `
+            <div class="form-section">
+              <label class="form-label" for="f-v0">Voltage (0A)</label>
+              <input class="form-input" id="f-v0" type="number" step="0.001" min="0" max="20" placeholder="12.800">
+            </div>
+          ` : `
+            <div class="form-section">
+              <label class="form-label" for="f-v0">0A - resting / open circuit</label>
+              <input class="form-input" id="f-v0" type="number" step="0.001" min="0" max="20" placeholder="12.840">
+            </div>
+            <div class="form-section">
+              <label class="form-label" for="f-v1">1A - light load</label>
+              <input class="form-input" id="f-v1" type="number" step="0.001" min="0" max="20" placeholder="12.710">
+            </div>
+            <div class="form-section">
+              <label class="form-label" for="f-v18">18A - full load</label>
+              <input class="form-input" id="f-v18" type="number" step="0.001" min="0" max="20" placeholder="11.930">
+            </div>
+          `}
+        ` : ""}
         ${showIR ? `
           <div class="form-section">
             <label class="form-label" for="f-ir">Internal Resistance (mΩ)</label>
             <input class="form-input" id="f-ir" type="number" step="0.1" min="0" placeholder="18.5">
-          </div>` : ""}
+          </div>
+        ` : ""}
         ${showMatch ? `
           <div class="form-section">
             <label class="form-label" for="f-match">Match Number</label>
             <input class="form-input" id="f-match" type="number" min="1" placeholder="1">
-          </div>` : ""}
+          </div>
+        ` : ""}
+        ${showCompetition ? `
+          <div class="form-section">
+            <label class="form-label">Competition <span class="optional">(optional)</span></label>
+            ${activeCompetition
+              ? `<button class="type-chip selected" id="active-comp-chip" type="button">${activeCompetition.name}</button>`
+              : `<span class="form-hint">No active competition - set one in Competitions</span>`}
+          </div>
+        ` : ""}
         ${showRobot ? `
           <div class="form-section">
             <label class="form-label">Robot ${robotRequired ? "" : "<span class=\"optional\">(optional)</span>"}</label>
@@ -85,7 +133,8 @@ export async function renderLogEvent(container, { id }) {
               `).join("")}
               ${robots.length === 0 ? `<span class="form-hint">No active robots found</span>` : ""}
             </div>
-          </div>` : ""}
+          </div>
+        ` : ""}
         <div class="form-section">
           <label class="form-label" for="f-by">Logged By</label>
           <input class="form-input" id="f-by" type="text" placeholder="Your name or initials">
@@ -94,7 +143,8 @@ export async function renderLogEvent(container, { id }) {
           <div class="form-section">
             <label class="form-label" for="f-notes">Notes <span class="optional">(optional)</span></label>
             <textarea class="form-input form-textarea" id="f-notes" placeholder="Any details..."></textarea>
-          </div>` : ""}
+          </div>
+        ` : ""}
       </div>
 
       <button class="btn-primary btn-full" id="submit-btn">Save Event</button>
@@ -103,12 +153,23 @@ export async function renderLogEvent(container, { id }) {
 
     document.getElementById("back-btn").onclick = () => navigate("battery", { id });
 
-    document.querySelectorAll(".type-chip").forEach((chip) => {
+    document.querySelectorAll(".type-chip[data-type]").forEach((chip) => {
       chip.onclick = () => {
         selectedType = chip.dataset.type;
         selectedRobotId = null;
         buildForm();
       };
+    });
+
+    document.querySelectorAll("[data-beak-mode]").forEach((btn) => {
+      btn.onclick = () => {
+        beakMode = btn.dataset.beakMode;
+        buildForm();
+      };
+    });
+
+    document.getElementById("active-comp-chip")?.addEventListener("click", () => {
+      selectedCompetitionId = activeCompetition?.id || null;
     });
 
     if (showRobot) {
@@ -137,18 +198,28 @@ export async function renderLogEvent(container, { id }) {
       errEl.textContent = "";
 
       const payload = { event_type: selectedType };
-      const v = document.getElementById("f-voltage")?.value;
+      const v0 = document.getElementById("f-v0")?.value;
+      const v1 = document.getElementById("f-v1")?.value;
+      const v18 = document.getElementById("f-v18")?.value;
       const ir = document.getElementById("f-ir")?.value;
       const match = document.getElementById("f-match")?.value;
       const by = document.getElementById("f-by")?.value;
       const notes = document.getElementById("f-notes")?.value;
 
-      if (v) payload.voltage = parseFloat(v);
+      if (v0) {
+        payload.voltage_0a = parseFloat(v0);
+        payload.voltage = parseFloat(v0);
+      }
+      if (v1) payload.voltage_1a = parseFloat(v1);
+      if (v18) payload.voltage_18a = parseFloat(v18);
       if (ir) payload.internal_resistance = parseFloat(ir);
       if (match) payload.match_number = parseInt(match);
       if (by) payload.logged_by = by;
       if (notes) payload.notes = notes;
       if (selectedRobotId) payload.robot_id = selectedRobotId;
+      if (selectedCompetitionId && (selectedType === "match" || selectedType === "practice")) {
+        payload.competition_id = selectedCompetitionId;
+      }
 
       try {
         await api.logEvent(id, payload);

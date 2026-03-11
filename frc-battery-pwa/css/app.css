@@ -267,6 +267,83 @@ input, textarea { font: inherit; color: inherit; }
 .type-chip:hover  { border-color: var(--accent); }
 .type-chip.selected { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
 
+.segmented-control {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.seg-btn {
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  padding: 11px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.seg-btn.selected {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.robot-chip-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.robot-chip {
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.robot-chip.selected {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+
+.robot-chip-num {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+}
+
+.robot-chip-name {
+  color: var(--text-2);
+}
+
+.rotation-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.rotation-lane .battery-card {
+  margin-bottom: 8px;
+}
+
+.rotation-retired {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
+@media (min-width: 900px) {
+  #app {
+    max-width: 1100px;
+  }
+
+  .rotation-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 /* ── QR overlay ─────────────────────────────────────────────────── */
 .qr-overlay {
   position: fixed; inset: 0;

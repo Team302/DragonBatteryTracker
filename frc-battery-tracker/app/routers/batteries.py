@@ -1,9 +1,10 @@
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
 from app.models.models import Battery
-from app.models.schemas import BatteryCreate, BatteryUpdate, BatteryResponse
+from app.models.schemas import BatteryCreate, BatteryUpdate, BatteryResponse, BatteryRotationUpdate
 
 router = APIRouter(prefix="/batteries", tags=["batteries"])
 
@@ -68,3 +69,20 @@ async def delete_battery(battery_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Battery not found")
     await db.delete(battery)
     await db.commit()
+
+
+@router.patch("/{battery_id}/rotation", response_model=BatteryResponse)
+async def update_rotation_status(
+    battery_id: int,
+    payload: BatteryRotationUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    battery = await db.get(Battery, battery_id)
+    if not battery:
+        raise HTTPException(status_code=404, detail="Battery not found")
+
+    battery.rotation_status = payload.rotation_status
+    battery.rotation_updated_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(battery)
+    return battery

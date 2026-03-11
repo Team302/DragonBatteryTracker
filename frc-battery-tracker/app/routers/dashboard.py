@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, case
+from sqlalchemy import select, func
 from app.database import get_db
-from app.models.models import Battery, Event
+from app.models.models import Battery, Event, Competition
 from app.models.schemas import BatterySummary, IRDataPoint
 from app.config import settings
 
@@ -26,6 +26,9 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
     # Get all batteries
     batteries_result = await db.execute(select(Battery).order_by(Battery.label))
     batteries = batteries_result.scalars().all()
+
+    active_comp_result = await db.execute(select(Competition).where(Competition.active == True))
+    active_competition = active_comp_result.scalar_one_or_none()
 
     summaries = []
     for battery in batteries:
@@ -56,9 +59,42 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
             charge_cycles=counts.get("charge", 0),
             match_uses=counts.get("match", 0),
             practice_uses=counts.get("practice", 0),
+            competition_match_uses=0,
+            competition_charge_cycles=0,
             status=_compute_status(float(beak.internal_resistance) if beak and beak.internal_resistance else None),
             last_checked=beak.created_at if beak else None,
         ))
+
+    if active_competition:
+        for summary in summaries:
+            charge_predicates = [
+                Event.battery_id == summary.battery.id,
+                Event.event_type == "charge",
+            ]
+            if active_competition.start_date is not None:
+                charge_predicates.append(Event.created_at >= active_competition.start_date)
+            else:
+                charge_predicates.append(Event.competition_id == active_competition.id)
+
+            competition_charge_result = await db.execute(
+                select(func.count(Event.id)).where(*charge_predicates)
+            )
+
+            competition_counts_result = await db.execute(
+                select(
+                    Event.event_type,
+                    func.count(Event.id).label("cnt")
+                )
+                .where(
+                    Event.battery_id == summary.battery.id,
+                    Event.competition_id == active_competition.id,
+                    Event.event_type.in_(["match", "charge"]),
+                )
+                .group_by(Event.event_type)
+            )
+            competition_counts = {row.event_type: row.cnt for row in competition_counts_result}
+            summary.competition_match_uses = competition_counts.get("match", 0)
+            summary.competition_charge_cycles = competition_charge_result.scalar() or 0
 
     # Sort: retire first, then warn, then good, then unknown
     order = {"retire": 0, "warn": 1, "good": 2, "unknown": 3}

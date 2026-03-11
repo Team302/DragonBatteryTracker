@@ -3,17 +3,21 @@ import { renderBattery } from "./views/battery.js";
 import { renderLogEvent } from "./views/log-event.js";
 import { renderRegister } from "./views/register.js";
 import { renderRobots } from "./views/robots.js";
+import { renderRotation } from "./views/rotation.js";
+import { renderCompetitions } from "./views/competitions.js";
 
 const container = document.getElementById("app");
 
 // ── Router ────────────────────────────────────────────────────────
 
 const ROUTES = {
+  rotation: renderRotation,
   dashboard: renderDashboard,
   battery: renderBattery,
   "log-event": renderLogEvent,
   register: renderRegister,
   robots: renderRobots,
+  competitions: renderCompetitions,
 };
 
 export function navigate(view, params = {}) {
@@ -27,7 +31,7 @@ function parseHash() {
   const raw = window.location.hash.slice(1); // remove #
   const [view, qs] = raw.split("?");
   const params = qs ? Object.fromEntries(new URLSearchParams(qs)) : {};
-  return { view: view || "dashboard", params };
+  return { view: view || "rotation", params };
 }
 
 async function route() {
@@ -47,7 +51,7 @@ async function route() {
     return;
   }
 
-  const renderer = ROUTES[view] || renderDashboard;
+  const renderer = ROUTES[view] || renderRotation;
   container.innerHTML = "";
   window.scrollTo(0, 0);
 

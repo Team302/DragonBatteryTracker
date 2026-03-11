@@ -44,6 +44,20 @@ export const api = {
   updateRobot: (id, data) => request("PATCH", `/robots/${id}`, data),
   deleteRobot: (id) => request("DELETE", `/robots/${id}`),
 
+  // Competitions
+  listCompetitions: () => request("GET", "/competitions/"),
+  getActiveCompetition: () => request("GET", "/competitions/active"),
+  getCompetition: (id) => request("GET", `/competitions/${id}`),
+  createCompetition: (data) => request("POST", "/competitions/", data),
+  updateCompetition: (id, data) => request("PATCH", `/competitions/${id}`, data),
+  activateCompetition: (id) => request("POST", `/competitions/${id}/activate`),
+  deactivateCompetition: (id) => request("POST", `/competitions/${id}/deactivate`),
+  getCompetitionSummary: (id) => request("GET", `/competitions/${id}/summary`),
+
+  // Rotation
+  updateRotation: (batteryId, status) =>
+    request("PATCH", `/batteries/${batteryId}/rotation`, { rotation_status: status }),
+
   // Dashboard
   getDashboard: () => request("GET", "/dashboard/"),
   getIrTrend: (batteryId) => request("GET", `/dashboard/battery/${batteryId}/ir-trend`),

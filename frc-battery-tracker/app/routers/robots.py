@@ -68,7 +68,7 @@ async def get_robot_events(
     result = await db.execute(
         select(Event)
         .where(Event.robot_id == robot_id)
-        .options(selectinload(Event.robot))
+        .options(selectinload(Event.robot), selectinload(Event.competition))
         .order_by(Event.created_at.desc())
         .limit(limit)
     )

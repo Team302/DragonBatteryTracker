@@ -24,6 +24,9 @@ export async function renderBattery(container, { id }) {
     document.getElementById("batt-title").textContent = battery.label;
     const beak = events.find((e) => e.event_type === "beak_check");
     const ir = beak?.internal_resistance;
+    const v0 = beak?.voltage_0a ?? beak?.voltage;
+    const v18 = beak?.voltage_18a;
+    const sag = v0 != null && v18 != null ? (v0 - v18) : null;
     const status = ir == null ? "unknown" : ir >= 30 ? "retire" : ir >= 22 ? "warn" : "good";
     const statusLabel = { good: "Good", warn: "Watch", retire: "Retire", unknown: "No Data" }[status];
 
@@ -35,7 +38,7 @@ export async function renderBattery(container, { id }) {
 
       <div class="metrics-grid">
         <div class="metric-box">
-          <span class="metric-val">${beak?.voltage ?? "—"}</span>
+          <span class="metric-val">${v0 ?? "—"}</span>
           <span class="metric-key">Voltage (V)</span>
         </div>
         <div class="metric-box">
@@ -49,6 +52,10 @@ export async function renderBattery(container, { id }) {
         <div class="metric-box">
           <span class="metric-val">${events.filter(e => e.event_type === "charge").length}</span>
           <span class="metric-key">Charges</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-val">${sag != null ? sag.toFixed(3) : "—"}</span>
+          <span class="metric-key">Sag (V)</span>
         </div>
       </div>
 
@@ -94,12 +101,21 @@ function renderEvent(e) {
   const icon = icons[e.event_type] || "•";
   const label = e.event_type.replace("_", " ");
   const date = new Date(e.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const beakVoltages =
+    e.event_type === "beak_check"
+      ? [
+          e.voltage_0a != null ? `0A: ${e.voltage_0a}V` : (e.voltage != null ? `${e.voltage}V` : null),
+          e.voltage_1a != null ? `1A: ${e.voltage_1a}V` : null,
+          e.voltage_18a != null ? `18A: ${e.voltage_18a}V` : null,
+        ].filter(Boolean)
+      : [];
   const robotInfo =
     e.robot && (e.event_type === "match" || e.event_type === "practice")
       ? `Robot ${e.robot.number} · ${e.robot.name}`
       : null;
   const detail = [
-    e.voltage ? `${e.voltage}V` : null,
+    ...beakVoltages,
+    e.event_type !== "beak_check" && e.voltage ? `${e.voltage}V` : null,
     e.internal_resistance ? `${e.internal_resistance}mΩ` : null,
     e.match_number ? `Match ${e.match_number}` : null,
     robotInfo,
