@@ -2,6 +2,7 @@ import { renderDashboard } from "./views/dashboard.js";
 import { renderBattery } from "./views/battery.js";
 import { renderLogEvent } from "./views/log-event.js";
 import { renderRegister } from "./views/register.js";
+import { renderRobots } from "./views/robots.js";
 
 const container = document.getElementById("app");
 
@@ -12,6 +13,7 @@ const ROUTES = {
   battery: renderBattery,
   "log-event": renderLogEvent,
   register: renderRegister,
+  robots: renderRobots,
 };
 
 export function navigate(view, params = {}) {

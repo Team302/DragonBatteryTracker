@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
-from app.routers import batteries, events, dashboard
+from app.routers import batteries, events, dashboard, robots
 
 
 @asynccontextmanager
@@ -31,6 +31,7 @@ app.add_middleware(
 app.include_router(batteries.router)
 app.include_router(events.router)
 app.include_router(dashboard.router)
+app.include_router(robots.router)
 
 
 @app.get("/health")

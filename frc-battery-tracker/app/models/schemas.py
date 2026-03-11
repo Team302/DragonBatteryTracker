@@ -41,6 +41,39 @@ class BatteryResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# ── Robot schemas ─────────────────────────────────────────────────
+
+RobotType = Literal["alpha", "beta", "sled"]
+
+
+class RobotCreate(BaseModel):
+    number: int
+    name: str
+    robot_type: RobotType
+    active: bool = True
+    notes: Optional[str] = None
+
+
+class RobotUpdate(BaseModel):
+    number: Optional[int] = None
+    name: Optional[str] = None
+    robot_type: Optional[RobotType] = None
+    active: Optional[bool] = None
+    notes: Optional[str] = None
+
+
+class RobotResponse(BaseModel):
+    id: int
+    number: int
+    name: str
+    robot_type: str
+    active: bool
+    notes: Optional[str]
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 # ── Event schemas ─────────────────────────────────────────────────
 
 class EventCreate(BaseModel):
@@ -50,6 +83,7 @@ class EventCreate(BaseModel):
     match_number: Optional[int] = Field(None, ge=1)
     logged_by: Optional[str] = None
     notes: Optional[str] = None
+    robot_id: Optional[int] = None
 
 
 class EventResponse(BaseModel):
@@ -62,6 +96,8 @@ class EventResponse(BaseModel):
     logged_by: Optional[str]
     notes: Optional[str]
     created_at: datetime
+    robot_id: Optional[int]
+    robot: Optional[RobotResponse] = None
 
     model_config = {"from_attributes": True}
 

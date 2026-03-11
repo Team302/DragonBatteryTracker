@@ -40,4 +40,21 @@ class Event(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
+    robot_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("robots.id"), nullable=True)
+
     battery: Mapped["Battery"] = relationship("Battery", back_populates="events")
+    robot: Mapped["Robot | None"] = relationship("Robot", back_populates="events")
+
+
+class Robot(Base):
+    __tablename__ = "robots"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    number: Mapped[int] = mapped_column(Integer, nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    robot_type: Mapped[str] = mapped_column(String(50), nullable=False)  # alpha | beta | sled
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    events: Mapped[list["Event"]] = relationship("Event", back_populates="robot")

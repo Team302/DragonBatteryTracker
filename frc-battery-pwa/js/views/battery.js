@@ -94,10 +94,15 @@ function renderEvent(e) {
   const icon = icons[e.event_type] || "•";
   const label = e.event_type.replace("_", " ");
   const date = new Date(e.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const robotInfo =
+    e.robot && (e.event_type === "match" || e.event_type === "practice")
+      ? `Robot ${e.robot.number} · ${e.robot.name}`
+      : null;
   const detail = [
     e.voltage ? `${e.voltage}V` : null,
     e.internal_resistance ? `${e.internal_resistance}mΩ` : null,
     e.match_number ? `Match ${e.match_number}` : null,
+    robotInfo,
     e.logged_by ? `by ${e.logged_by}` : null,
   ].filter(Boolean).join(" · ");
 

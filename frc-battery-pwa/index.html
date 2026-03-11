@@ -49,6 +49,14 @@
       </svg>
       Add
     </button>
+    <button class="nav-btn" id="nav-robots" onclick="window.location.hash='#robots'">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="7" y="2" width="10" height="8" rx="1"/>
+        <path d="M12 10v2M5 14h14a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1z"/>
+        <circle cx="9" cy="17" r="1"/><circle cx="15" cy="17" r="1"/>
+      </svg>
+      Robots
+    </button>
   </nav>
 
   <!-- QR scan modal for the nav bar scan button -->
@@ -76,6 +84,7 @@
       document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
       if (view === "dashboard") document.getElementById("nav-fleet")?.classList.add("active");
       if (view === "register") document.getElementById("nav-add")?.classList.add("active");
+      if (view === "robots") document.getElementById("nav-robots")?.classList.add("active");
     }
 
     // Nav bar manual QR scan

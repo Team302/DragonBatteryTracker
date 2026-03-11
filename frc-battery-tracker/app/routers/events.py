@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models.models import Battery, Event
 from app.models.schemas import EventCreate, EventResponse
@@ -32,7 +33,10 @@ async def log_event(battery_id: int, payload: EventCreate, db: AsyncSession = De
 
     await db.commit()
     await db.refresh(event)
-    return event
+    result = await db.execute(
+        select(Event).where(Event.id == event.id).options(selectinload(Event.robot))
+    )
+    return result.scalar_one()
 
 
 @router.get("/", response_model=list[EventResponse])
@@ -43,7 +47,11 @@ async def get_events(
     db: AsyncSession = Depends(get_db),
 ):
     await _get_battery_or_404(battery_id, db)
-    query = select(Event).where(Event.battery_id == battery_id)
+    query = (
+        select(Event)
+        .where(Event.battery_id == battery_id)
+        .options(selectinload(Event.robot))
+    )
     if event_type:
         query = query.where(Event.event_type == event_type)
     query = query.order_by(Event.created_at.desc()).limit(limit)

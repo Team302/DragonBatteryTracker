@@ -34,6 +34,16 @@ export const api = {
     return request("GET", `/batteries/${batteryId}/events/${q}`);
   },
 
+  // Robots
+  listRobots: (active = null) => {
+    const q = active !== null ? `?active=${active}` : "";
+    return request("GET", `/robots/${q}`);
+  },
+  getRobot: (id) => request("GET", `/robots/${id}`),
+  createRobot: (data) => request("POST", "/robots/", data),
+  updateRobot: (id, data) => request("PATCH", `/robots/${id}`, data),
+  deleteRobot: (id) => request("DELETE", `/robots/${id}`),
+
   // Dashboard
   getDashboard: () => request("GET", "/dashboard/"),
   getIrTrend: (batteryId) => request("GET", `/dashboard/battery/${batteryId}/ir-trend`),
