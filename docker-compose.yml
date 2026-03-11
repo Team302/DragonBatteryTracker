@@ -35,6 +35,8 @@ services:
     container_name: frc-battery-tracker-pwa
     build:
       context: ./frc-battery-pwa
+      args:
+        BASIC_AUTH_PASSWORD: ${BASIC_AUTH_PASSWORD:-changeme}
     restart: unless-stopped
     ports:
       - "3000:80"
