@@ -1,5 +1,5 @@
-// Base URL — in production this points to your FastAPI container
-const BASE = window.API_BASE || "http://localhost:8000";
+// Default to same-origin API path; can be overridden via window.API_BASE.
+const BASE = (window.API_BASE || "/api").replace(/\/$/, "");
 
 async function request(method, path, body = null) {
   const opts = {

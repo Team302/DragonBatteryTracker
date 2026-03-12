@@ -34,14 +34,16 @@ frc-battery-pwa/
 
 ### 1. Set the API URL
 
-Edit `index.html` and update:
+By default, `index.html` uses:
 ```html
 <script>
-  window.API_BASE = "http://YOUR_SERVER_IP:8000";
+  window.API_BASE = "/api";
 </script>
 ```
 
-In production this should be your server's IP or domain. On a local network at a competition this would be the Pi's IP (e.g., `http://10.0.0.5:8000`).
+This works with the included nginx config, which reverse-proxies `/api/*` to the FastAPI container.
+
+If your frontend and API are hosted on different domains, set `window.API_BASE` to the full API origin (for example `https://api.example.com`).
 
 ### 2. Add icons
 

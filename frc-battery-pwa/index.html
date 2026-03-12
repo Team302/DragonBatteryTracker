@@ -17,7 +17,8 @@
 
   <!-- Config: set your API URL here or via environment injection -->
   <script>
-    window.API_BASE = "http://localhost:8000"; // ← change this in production
+    // Use same-origin reverse proxy by default.
+    window.API_BASE = "/api";
   </script>
 </head>
 <body>
