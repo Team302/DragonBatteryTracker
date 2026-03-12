@@ -37,6 +37,9 @@ services:
       context: ./frc-battery-pwa
       args:
         BASIC_AUTH_PASSWORD: ${BASIC_AUTH_PASSWORD:-changeme}
+    environment:
+      API_BASE: ${API_BASE:-/api}
+      PUBLIC_HOST: ${PUBLIC_HOST:-}
     restart: unless-stopped
     ports:
       - "3000:80"

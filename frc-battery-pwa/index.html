@@ -15,10 +15,13 @@
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <link rel="stylesheet" href="/css/app.css">
 
-  <!-- Config: set your API URL here or via environment injection -->
+  <!-- Runtime config injected by container startup script -->
+  <script src="/config.js"></script>
+
+  <!-- Safe defaults for non-container/static usage -->
   <script>
-    // Use same-origin reverse proxy by default.
-    window.API_BASE = "/api";
+    window.API_BASE = window.API_BASE || "/api";
+    window.PUBLIC_HOST = window.PUBLIC_HOST || window.location.origin;
   </script>
 </head>
 <body>

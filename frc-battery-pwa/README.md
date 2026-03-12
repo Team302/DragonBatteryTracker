@@ -32,18 +32,18 @@ frc-battery-pwa/
 
 ## Setup
 
-### 1. Set the API URL
+### 1. Set host/API in `.env`
 
-By default, `index.html` uses:
-```html
-<script>
-  window.API_BASE = "/api";
-</script>
+Set these in the repository root `.env` file:
+
+```dotenv
+PUBLIC_HOST=https://your-hostname.example.com
+API_BASE=/api
 ```
 
-This works with the included nginx config, which reverse-proxies `/api/*` to the FastAPI container.
-
-If your frontend and API are hosted on different domains, set `window.API_BASE` to the full API origin (for example `https://api.example.com`).
+- `PUBLIC_HOST` is your externally reachable hostname and is exposed to the PWA as `window.PUBLIC_HOST`.
+- `API_BASE` defaults to `/api`, which works with the included nginx reverse proxy to the FastAPI container.
+- If your frontend and API are on different domains, set `API_BASE` to a full origin (for example `https://api.example.com`).
 
 ### 2. Add icons
 
