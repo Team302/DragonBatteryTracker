@@ -1,0 +1,2 @@
+window.API_BASE = "${API_BASE}";
+window.PUBLIC_HOST = "${PUBLIC_HOST}";
