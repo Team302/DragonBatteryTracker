@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from app.database import Base
-from app.models.models import Battery, Event  # noqa: F401 — ensure models are registered
+from app.models.models import Battery, Event, Robot, Competition  # noqa: F401 — ensure models are registered
 
 config = context.config
 if config.config_file_name is not None:

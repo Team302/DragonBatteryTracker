@@ -2,14 +2,16 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
+from app.config import settings
 from app.routers import batteries, events, dashboard, robots, competitions
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create tables on startup (use Alembic for production migrations)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Only create tables in development; production uses Alembic migrations
+    if settings.environment == "development":
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
     yield
     await engine.dispose()
 

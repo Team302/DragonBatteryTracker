@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, update, func, case, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
+from app.config import settings
 from app.models.models import Competition, Battery, Event
 from app.models.schemas import (
     CompetitionCreate,
@@ -16,9 +17,9 @@ router = APIRouter(prefix="/competitions", tags=["competitions"])
 def _compute_status(ir: float | None) -> str:
     if ir is None:
         return "unknown"
-    if ir >= 30:
+    if ir >= settings.ir_retire_threshold:
         return "retire"
-    if ir >= 22:
+    if ir >= settings.ir_warn_threshold:
         return "warn"
     return "good"
 
@@ -106,15 +107,12 @@ async def get_competition_summary(competition_id: int, db: AsyncSession = Depend
     if not competition:
         raise HTTPException(status_code=404, detail="Competition not found")
 
-    beak_where = and_(
-        Event.competition_id == competition_id,
-        Event.event_type == "beak_check",
-    )
     min_voltage_expr = func.min(
         case(
-            (Event.voltage_18a.is_not(None), Event.voltage_18a),
-            (Event.voltage_1a.is_not(None), Event.voltage_1a),
-            else_=func.coalesce(Event.voltage_0a, Event.voltage),
+            (and_(Event.event_type == "beak_check", Event.competition_id == competition_id, Event.voltage_18a.is_not(None)), Event.voltage_18a),
+            (and_(Event.event_type == "beak_check", Event.competition_id == competition_id, Event.voltage_1a.is_not(None)), Event.voltage_1a),
+            (and_(Event.event_type == "beak_check", Event.competition_id == competition_id), func.coalesce(Event.voltage_0a, Event.voltage)),
+            else_=None,
         )
     )
 

@@ -54,14 +54,14 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
 
         summaries.append(BatterySummary(
             battery=battery,
-            latest_voltage=float(beak.voltage) if beak and beak.voltage else None,
-            latest_ir=float(beak.internal_resistance) if beak and beak.internal_resistance else None,
+            latest_voltage=float(beak.voltage) if beak and beak.voltage is not None else None,
+            latest_ir=float(beak.internal_resistance) if beak and beak.internal_resistance is not None else None,
             charge_cycles=counts.get("charge", 0),
             match_uses=counts.get("match", 0),
             practice_uses=counts.get("practice", 0),
             competition_match_uses=0,
             competition_charge_cycles=0,
-            status=_compute_status(float(beak.internal_resistance) if beak and beak.internal_resistance else None),
+            status=_compute_status(float(beak.internal_resistance) if beak and beak.internal_resistance is not None else None),
             last_checked=beak.created_at if beak else None,
         ))
 

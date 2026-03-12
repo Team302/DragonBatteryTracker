@@ -31,6 +31,19 @@ async def log_event(battery_id: int, payload: EventCreate, db: AsyncSession = De
         if not competition:
             raise HTTPException(status_code=404, detail="Competition not found")
 
+    # Validate match events have required fields.
+    if payload.event_type == "match":
+        if payload.match_number is None:
+            raise HTTPException(
+                status_code=422,
+                detail="match events require match_number",
+            )
+        if payload.robot_id is None:
+            raise HTTPException(
+                status_code=422,
+                detail="match events require robot_id",
+            )
+
     # Validate beak_check has at least one voltage reading or IR.
     if (
         payload.event_type == "beak_check"

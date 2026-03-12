@@ -20,8 +20,7 @@ frc-battery-tracker/
 │       ├── events.py     # Event logging per battery
 │       └── dashboard.py  # Summary, IR trend, fleet stats
 ├── alembic/              # DB migrations
-├── requirements.txt
-└── .env.example
+└── requirements.txt
 ```
 
 ---
@@ -39,8 +38,10 @@ pip install -r requirements.txt
 ### 2. Configure environment
 
 ```bash
-cp .env.example .env
+cd ..  # Go to repo root (where env.example is located)
+cp env.example .env
 # Edit .env with your Postgres URL and settings
+cd frc-battery-tracker  # Return to app directory
 ```
 
 ### 3. Create the database

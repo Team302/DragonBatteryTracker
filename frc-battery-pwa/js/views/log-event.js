@@ -139,7 +139,7 @@ export async function renderLogEvent(container, { id }) {
           <label class="form-label" for="f-by">Logged By</label>
           <input class="form-input" id="f-by" type="text" placeholder="Your name or initials">
         </div>
-        ${showNotes || true ? `
+        ${showNotes ? `
           <div class="form-section">
             <label class="form-label" for="f-notes">Notes <span class="optional">(optional)</span></label>
             <textarea class="form-input form-textarea" id="f-notes" placeholder="Any details..."></textarea>

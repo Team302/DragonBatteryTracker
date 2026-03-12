@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     database_url: str
     secret_key: str = "changeme"
     team_number: str = "0000"
+    environment: str = "production"  # 'development' or 'production'
 
     # IR thresholds in mΩ
     ir_warn_threshold: float = 22.0
