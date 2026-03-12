@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 EventType = Literal["charge", "match", "practice", "beak_check", "incident", "retired"]
 RotationStatus = Literal["ready", "charging", "in_use", "cool_down"]
+BeakStatus = Literal["bad", "fair", "good"]
 
 
 # ── Battery schemas ──────────────────────────────────────────────
@@ -14,6 +15,7 @@ class BatteryCreate(BaseModel):
     nfc_uid: Optional[str] = None
     purchased: Optional[datetime] = None
     manufacturer: Optional[str] = None
+    battery_model: Optional[str] = None
     capacity_ah: Optional[float] = None
     notes: Optional[str] = None
 
@@ -23,6 +25,7 @@ class BatteryUpdate(BaseModel):
     nfc_uid: Optional[str] = None
     purchased: Optional[datetime] = None
     manufacturer: Optional[str] = None
+    battery_model: Optional[str] = None
     capacity_ah: Optional[float] = None
     notes: Optional[str] = None
     retired: Optional[bool] = None
@@ -34,6 +37,7 @@ class BatteryResponse(BaseModel):
     nfc_uid: Optional[str]
     purchased: Optional[datetime]
     manufacturer: Optional[str]
+    battery_model: Optional[str]
     capacity_ah: Optional[float]
     notes: Optional[str]
     retired: bool
@@ -122,6 +126,8 @@ class EventCreate(BaseModel):
     voltage_1a: Optional[float] = Field(None, ge=0, le=20)
     voltage_18a: Optional[float] = Field(None, ge=0, le=20)
     internal_resistance: Optional[float] = Field(None, ge=0, le=1000)
+    beak_status: Optional[BeakStatus] = None
+    charge_percent: Optional[float] = Field(None, ge=0, le=100)
     match_number: Optional[int] = Field(None, ge=1)
     logged_by: Optional[str] = None
     notes: Optional[str] = None
@@ -138,6 +144,8 @@ class EventResponse(BaseModel):
     voltage_1a: Optional[float]
     voltage_18a: Optional[float]
     internal_resistance: Optional[float]
+    beak_status: Optional[BeakStatus]
+    charge_percent: Optional[float]
     match_number: Optional[int]
     logged_by: Optional[str]
     notes: Optional[str]

@@ -186,6 +186,16 @@ input, textarea { font: inherit; color: inherit; }
 .btn-primary:hover { opacity: 0.9; }
 .btn-primary:active { transform: scale(0.98); }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary {
+  flex: 1;
+  background: transparent;
+  color: var(--text-2);
+  font-weight: 600;
+  padding: 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  font-size: 15px;
+}
 .btn-full { width: 100%; }
 .btn-danger {
   padding: 14px 20px;
@@ -239,6 +249,7 @@ input, textarea { font: inherit; color: inherit; }
 .form-input:focus { border-color: var(--accent); }
 .form-textarea { min-height: 80px; resize: vertical; }
 .form-error { color: var(--danger); font-size: 13px; margin-top: 12px; min-height: 20px; }
+.hidden { display: none !important; }
 
 .input-row { display: flex; gap: 8px; }
 .input-row .form-input { flex: 1; }

@@ -36,6 +36,11 @@ export async function renderRegister(container, params = {}) {
     </div>
 
     <div class="form-section">
+      <label class="form-label" for="f-model">Battery Model</label>
+      <input class="form-input" id="f-model" type="text" placeholder="ES17-12, NP18-12B, etc.">
+    </div>
+
+    <div class="form-section">
       <label class="form-label" for="f-cap">Capacity (Ah)</label>
       <input class="form-input" id="f-cap" type="number" step="0.1" placeholder="18.0">
     </div>
@@ -77,12 +82,14 @@ export async function renderRegister(container, params = {}) {
 
     const nfc = document.getElementById("f-nfc").value.trim();
     const mfr = document.getElementById("f-mfr").value.trim();
+    const model = document.getElementById("f-model").value.trim();
     const cap = document.getElementById("f-cap").value;
     const purchased = document.getElementById("f-purchased").value;
 
     const payload = { label };
     if (nfc) payload.nfc_uid = nfc;
     if (mfr) payload.manufacturer = mfr;
+    if (model) payload.battery_model = model;
     if (cap) payload.capacity_ah = parseFloat(cap);
     if (purchased) payload.purchased = new Date(purchased).toISOString();
 

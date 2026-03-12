@@ -42,7 +42,7 @@ services:
       PUBLIC_HOST: ${PUBLIC_HOST:-}
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - "3002:80"
     depends_on:
       - api
 

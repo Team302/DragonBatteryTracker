@@ -29,6 +29,10 @@ export async function renderBattery(container, { id }) {
     const sag = v0 != null && v18 != null ? (v0 - v18) : null;
     const status = ir == null ? "unknown" : ir >= 30 ? "retire" : ir >= 22 ? "warn" : "good";
     const statusLabel = { good: "Good", warn: "Watch", retire: "Retire", unknown: "No Data" }[status];
+    const purchasedDisplay = battery.purchased
+      ? new Date(battery.purchased).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+      : "-";
+    const purchasedInput = battery.purchased ? new Date(battery.purchased).toISOString().slice(0, 10) : "";
 
     document.getElementById("batt-body").innerHTML = `
       <div class="health-banner status-${status}">
@@ -77,9 +81,110 @@ export async function renderBattery(container, { id }) {
           ${events.slice(0, 30).map(renderEvent).join("")}
         </div>
       </div>
+
+      <div class="history-section">
+        <h3 class="section-heading">Battery Details</h3>
+        <div class="event-list">
+          <div class="event-row">
+            <div class="event-info">
+              <span class="event-type">Manufacturer</span>
+              <span class="event-detail">${battery.manufacturer || "-"}</span>
+            </div>
+          </div>
+          <div class="event-row">
+            <div class="event-info">
+              <span class="event-type">Model</span>
+              <span class="event-detail">${battery.battery_model || "-"}</span>
+            </div>
+          </div>
+          <div class="event-row">
+            <div class="event-info">
+              <span class="event-type">Purchase Date</span>
+              <span class="event-detail">${purchasedDisplay}</span>
+            </div>
+          </div>
+          <div class="event-row">
+            <div class="event-info">
+              <span class="event-type">Capacity</span>
+              <span class="event-detail">${battery.capacity_ah != null ? `${battery.capacity_ah} Ah` : "-"}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn-secondary" id="toggle-details-btn" type="button">Edit Battery Details</button>
+        </div>
+
+        <div id="edit-details-form" class="hidden">
+          <div class="form-section">
+            <label class="form-label" for="f-edit-mfr">Manufacturer</label>
+            <input class="form-input" id="f-edit-mfr" type="text" value="${escapeHtml(battery.manufacturer || "")}" placeholder="MK Battery, Werker, etc.">
+          </div>
+          <div class="form-section">
+            <label class="form-label" for="f-edit-model">Battery Model</label>
+            <input class="form-input" id="f-edit-model" type="text" value="${escapeHtml(battery.battery_model || "")}" placeholder="ES17-12, NP18-12B, etc.">
+          </div>
+          <div class="form-section">
+            <label class="form-label" for="f-edit-cap">Capacity (Ah)</label>
+            <input class="form-input" id="f-edit-cap" type="number" step="0.1" min="0" value="${battery.capacity_ah != null ? battery.capacity_ah : ""}" placeholder="18.0">
+          </div>
+          <div class="form-section">
+            <label class="form-label" for="f-edit-purchased">Purchase Date</label>
+            <input class="form-input" id="f-edit-purchased" type="date" value="${purchasedInput}">
+          </div>
+          <div class="action-row">
+            <button class="btn-primary" id="save-details-btn" type="button">Save Battery Details</button>
+            <button class="btn-secondary" id="cancel-details-btn" type="button">Cancel</button>
+          </div>
+          <div id="details-error" class="form-error"></div>
+        </div>
+      </div>
     `;
 
     document.getElementById("log-btn").onclick = () => navigate("log-event", { id });
+    document.getElementById("toggle-details-btn")?.addEventListener("click", () => {
+      const form = document.getElementById("edit-details-form");
+      const toggleBtn = document.getElementById("toggle-details-btn");
+      form.classList.toggle("hidden");
+      toggleBtn.textContent = form.classList.contains("hidden") ? "Edit Battery Details" : "Close Editor";
+    });
+
+    document.getElementById("cancel-details-btn")?.addEventListener("click", () => {
+      const form = document.getElementById("edit-details-form");
+      const toggleBtn = document.getElementById("toggle-details-btn");
+      form.classList.add("hidden");
+      toggleBtn.textContent = "Edit Battery Details";
+    });
+
+    document.getElementById("save-details-btn")?.addEventListener("click", async () => {
+      const errEl = document.getElementById("details-error");
+      const saveBtn = document.getElementById("save-details-btn");
+      errEl.textContent = "";
+
+      const mfr = document.getElementById("f-edit-mfr").value.trim();
+      const model = document.getElementById("f-edit-model").value.trim();
+      const cap = document.getElementById("f-edit-cap").value;
+      const purchased = document.getElementById("f-edit-purchased").value;
+
+      const payload = {
+        manufacturer: mfr || null,
+        battery_model: model || null,
+        capacity_ah: cap === "" ? null : parseFloat(cap),
+        purchased: purchased ? new Date(purchased).toISOString() : null,
+      };
+
+      try {
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Saving...";
+        await api.updateBattery(id, payload);
+        await renderBattery(container, { id });
+      } catch (e) {
+        errEl.textContent = e.message;
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save Battery Details";
+      }
+    });
+
     document.getElementById("retire-btn")?.addEventListener("click", async () => {
       if (!confirm("Mark this battery as retired?")) return;
       await api.logEvent(id, { event_type: "retired" });
@@ -93,6 +198,15 @@ export async function renderBattery(container, { id }) {
   }
 }
 
+function escapeHtml(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 function renderEvent(e) {
   const icons = {
     charge: "⚡", match: "🏆", practice: "🔧",
@@ -100,7 +214,13 @@ function renderEvent(e) {
   };
   const icon = icons[e.event_type] || "•";
   const label = e.event_type.replace("_", " ");
-  const date = new Date(e.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const date = new Date(e.created_at).toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
   const beakVoltages =
     e.event_type === "beak_check"
       ? [
@@ -117,6 +237,8 @@ function renderEvent(e) {
     ...beakVoltages,
     e.event_type !== "beak_check" && e.voltage ? `${e.voltage}V` : null,
     e.internal_resistance ? `${e.internal_resistance}mΩ` : null,
+    e.beak_status ? `Status: ${e.beak_status[0].toUpperCase()}${e.beak_status.slice(1)}` : null,
+    e.charge_percent != null ? `Charge: ${e.charge_percent}%` : null,
     e.match_number ? `Match ${e.match_number}` : null,
     robotInfo,
     e.logged_by ? `by ${e.logged_by}` : null,

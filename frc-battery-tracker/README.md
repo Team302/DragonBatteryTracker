@@ -94,7 +94,7 @@ Visit `http://localhost:8000/docs` for the interactive API docs.
 - `charge` — battery plugged into charger
 - `match` — used in a competition match (include `match_number`)
 - `practice` — used in practice/drive time
-- `beak_check` — Battery Beak reading (include `voltage` and `internal_resistance`)
+- `beak_check` — Battery Beak reading (include `voltage` and `internal_resistance`; optional `beak_status` = `bad|fair|good` and `charge_percent`)
 - `incident` — dropped, over-discharged, or other notable event
 - `retired` — marks battery as retired (also sets `battery.retired = true`)
 

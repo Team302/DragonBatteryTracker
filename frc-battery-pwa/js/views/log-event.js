@@ -2,7 +2,7 @@ import { api } from "../api.js";
 import { navigate } from "../app.js";
 
 const EVENT_TYPES = [
-  { value: "beak_check", label: "🔬 Beak Check", fields: ["beak", "ir"] },
+  { value: "beak_check", label: "🔬 Beak Check", fields: ["beak", "ir", "beak_status", "charge_percent"] },
   { value: "charge", label: "⚡ Charged", fields: [] },
   { value: "match", label: "🏆 Match", fields: ["match_number"] },
   { value: "practice", label: "🔧 Practice", fields: [] },
@@ -41,6 +41,8 @@ export async function renderLogEvent(container, { id }) {
     const selected = EVENT_TYPES.find((t) => t.value === selectedType);
     const showBeak = selected.fields.includes("beak");
     const showIR = selected.fields.includes("ir");
+    const showBeakStatus = selected.fields.includes("beak_status");
+    const showChargePercent = selected.fields.includes("charge_percent");
     const showMatch = selected.fields.includes("match_number");
     const showNotes = selected.fields.includes("notes");
     const showRobot = selectedType === "match" || selectedType === "practice";
@@ -105,6 +107,23 @@ export async function renderLogEvent(container, { id }) {
           <div class="form-section">
             <label class="form-label" for="f-ir">Internal Resistance (mΩ)</label>
             <input class="form-input" id="f-ir" type="number" step="0.1" min="0" placeholder="18.5">
+          </div>
+        ` : ""}
+        ${showBeakStatus ? `
+          <div class="form-section">
+            <label class="form-label" for="f-beak-status">Status <span class="optional">(optional)</span></label>
+            <select class="form-input" id="f-beak-status">
+              <option value="">Select status</option>
+              <option value="bad">Bad</option>
+              <option value="fair">Fair</option>
+              <option value="good">Good</option>
+            </select>
+          </div>
+        ` : ""}
+        ${showChargePercent ? `
+          <div class="form-section">
+            <label class="form-label" for="f-charge-percent">Charge % <span class="optional">(optional)</span></label>
+            <input class="form-input" id="f-charge-percent" type="number" step="0.1" min="0" max="100" placeholder="85">
           </div>
         ` : ""}
         ${showMatch ? `
@@ -202,6 +221,8 @@ export async function renderLogEvent(container, { id }) {
       const v1 = document.getElementById("f-v1")?.value;
       const v18 = document.getElementById("f-v18")?.value;
       const ir = document.getElementById("f-ir")?.value;
+      const beakStatus = document.getElementById("f-beak-status")?.value;
+      const chargePercent = document.getElementById("f-charge-percent")?.value;
       const match = document.getElementById("f-match")?.value;
       const by = document.getElementById("f-by")?.value;
       const notes = document.getElementById("f-notes")?.value;
@@ -213,6 +234,8 @@ export async function renderLogEvent(container, { id }) {
       if (v1) payload.voltage_1a = parseFloat(v1);
       if (v18) payload.voltage_18a = parseFloat(v18);
       if (ir) payload.internal_resistance = parseFloat(ir);
+      if (beakStatus) payload.beak_status = beakStatus;
+      if (chargePercent !== undefined && chargePercent !== "") payload.charge_percent = parseFloat(chargePercent);
       if (match) payload.match_number = parseInt(match);
       if (by) payload.logged_by = by;
       if (notes) payload.notes = notes;

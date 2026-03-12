@@ -17,6 +17,7 @@ class Battery(Base):
     nfc_uid: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
     purchased: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     manufacturer: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    battery_model: Mapped[str | None] = mapped_column(String(100), nullable=True)
     capacity_ah: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     retired: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -41,6 +42,8 @@ class Event(Base):
     voltage_1a: Mapped[float | None] = mapped_column(Numeric(5, 3), nullable=True)
     voltage_18a: Mapped[float | None] = mapped_column(Numeric(5, 3), nullable=True)
     internal_resistance: Mapped[float | None] = mapped_column(Numeric(6, 2), nullable=True)  # mΩ
+    beak_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # bad | fair | good
+    charge_percent: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)  # 0-100%
     match_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     logged_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
