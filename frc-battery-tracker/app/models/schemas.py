@@ -125,7 +125,7 @@ class EventCreate(BaseModel):
     voltage_0a: Optional[float] = Field(None, ge=0, le=20)
     voltage_1a: Optional[float] = Field(None, ge=0, le=20)
     voltage_18a: Optional[float] = Field(None, ge=0, le=20)
-    internal_resistance: Optional[float] = Field(None, ge=0, le=1000)
+    internal_resistance: Optional[float] = Field(None, ge=0, le=1)
     beak_status: Optional[BeakStatus] = None
     charge_percent: Optional[float] = Field(None, ge=0, le=1000)
     match_number: Optional[int] = Field(None, ge=1)

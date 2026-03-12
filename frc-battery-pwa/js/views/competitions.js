@@ -103,7 +103,7 @@ export async function renderCompetitions(container) {
                 <div class="event-row">
                   <div class="event-info">
                     <span class="event-type">${row.battery_label}</span>
-                    <span class="event-detail">${row.match_count} matches · ${row.charge_count} charges · min V ${row.min_voltage ?? "-"} · IR ${row.latest_ir ?? "-"}mΩ</span>
+                    <span class="event-detail">${row.match_count} matches · ${row.charge_count} charges · min V ${row.min_voltage ?? "-"} · IR ${row.latest_ir ? row.latest_ir.toFixed(3) : "-"}Ω</span>
                   </div>
                   <span class="event-date">${row.status}</span>
                 </div>

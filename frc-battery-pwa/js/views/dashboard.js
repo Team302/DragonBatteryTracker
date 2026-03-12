@@ -57,7 +57,7 @@ function renderList(summaries) {
 
   document.getElementById("battery-list").innerHTML = summaries.map((s) => {
     const statusClass = s.status;
-    const irDisplay = s.latest_ir != null ? `${s.latest_ir} mΩ` : "—";
+    const irDisplay = s.latest_ir != null ? `${s.latest_ir.toFixed(3)} Ω` : "—";
     const vDisplay = s.latest_voltage != null ? `${s.latest_voltage}V` : "—";
     const dot = { good: "🟢", warn: "🟡", retire: "🔴", unknown: "⚪" }[s.status] || "⚪";
 

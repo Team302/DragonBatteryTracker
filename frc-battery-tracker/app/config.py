@@ -10,9 +10,9 @@ class Settings(BaseSettings):
     team_number: str = "0000"
     environment: str = "production"  # 'development' or 'production'
 
-    # IR thresholds in mΩ
-    ir_warn_threshold: float = 22.0
-    ir_retire_threshold: float = 30.0
+    # IR thresholds in Ω
+    ir_warn_threshold: float = 0.022
+    ir_retire_threshold: float = 0.030
 
     class Config:
         env_file = ".env"

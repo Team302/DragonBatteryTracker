@@ -105,8 +105,8 @@ export async function renderLogEvent(container, { id }) {
         ` : ""}
         ${showIR ? `
           <div class="form-section">
-            <label class="form-label" for="f-ir">Internal Resistance (mΩ)</label>
-            <input class="form-input" id="f-ir" type="number" step="0.1" min="0" placeholder="18.5">
+            <label class="form-label" for="f-ir">Internal Resistance (Ω)</label>
+            <input class="form-input" id="f-ir" type="number" step="0.001" min="0" placeholder="0.010">
           </div>
         ` : ""}
         ${showBeakStatus ? `
