@@ -41,7 +41,7 @@ class Event(Base):
     voltage_0a: Mapped[float | None] = mapped_column(Numeric(5, 3), nullable=True)
     voltage_1a: Mapped[float | None] = mapped_column(Numeric(5, 3), nullable=True)
     voltage_18a: Mapped[float | None] = mapped_column(Numeric(5, 3), nullable=True)
-    internal_resistance: Mapped[float | None] = mapped_column(Numeric(6, 2), nullable=True)  # mΩ
+    internal_resistance: Mapped[float | None] = mapped_column(Numeric(7, 3), nullable=True)  # Ω
     beak_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # bad | fair | good
     charge_percent: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)  # 0-100%
     match_number: Mapped[int | None] = mapped_column(Integer, nullable=True)

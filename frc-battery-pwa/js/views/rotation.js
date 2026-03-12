@@ -90,7 +90,7 @@ export async function renderRotation(container) {
         <div class="card-left">
           <div class="card-info">
             <span class="card-label">${b.label}</span>
-            <span class="card-meta">${b.latest_ir ?? "-"}mΩ · ${b.latest_voltage ?? "-"}V</span>
+            <span class="card-meta">${b.latest_ir ? b.latest_ir.toFixed(3) : "-"}Ω · ${b.latest_voltage ?? "-"}V</span>
             <span class="card-meta">${b.retired ? "RETIRED" : "Tap to move"}</span>
           </div>
         </div>

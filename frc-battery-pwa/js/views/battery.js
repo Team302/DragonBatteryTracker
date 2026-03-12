@@ -27,17 +27,18 @@ export async function renderBattery(container, { id }) {
     const v0 = beak?.voltage_0a ?? beak?.voltage;
     const v18 = beak?.voltage_18a;
     const sag = v0 != null && v18 != null ? (v0 - v18) : null;
-    const status = ir == null ? "unknown" : ir >= 30 ? "retire" : ir >= 22 ? "warn" : "good";
-    const statusLabel = { good: "Good", warn: "Watch", retire: "Retire", unknown: "No Data" }[status];
+    const status = beak?.beak_status ?? "unknown";
+    const statusTone = { good: "good", fair: "warn", bad: "retire", unknown: "unknown" }[status];
+    const statusLabel = { good: "Good", fair: "Fair", bad: "Bad", unknown: "No Data" }[status];
     const purchasedDisplay = battery.purchased
       ? new Date(battery.purchased).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
       : "-";
     const purchasedInput = battery.purchased ? new Date(battery.purchased).toISOString().slice(0, 10) : "";
 
     document.getElementById("batt-body").innerHTML = `
-      <div class="health-banner status-${status}">
+      <div class="health-banner status-${statusTone}">
         <span class="health-label">${statusLabel}</span>
-        ${ir != null ? `<span class="health-ir">${ir} mΩ</span>` : ""}
+        ${ir != null ? `<span class="health-ir">${ir.toFixed(3)} Ω</span>` : ""}
       </div>
 
       <div class="metrics-grid">
@@ -46,8 +47,8 @@ export async function renderBattery(container, { id }) {
           <span class="metric-key">Voltage (V)</span>
         </div>
         <div class="metric-box">
-          <span class="metric-val">${beak?.internal_resistance ?? "—"}</span>
-          <span class="metric-key">IR (mΩ)</span>
+          <span class="metric-val">${beak?.internal_resistance != null ? beak.internal_resistance.toFixed(3) : "—"}</span>
+          <span class="metric-key">IR (Ω)</span>
         </div>
         <div class="metric-box">
           <span class="metric-val">${events.filter(e => e.event_type === "match").length}</span>
@@ -236,7 +237,7 @@ function renderEvent(e) {
   const detail = [
     ...beakVoltages,
     e.event_type !== "beak_check" && e.voltage ? `${e.voltage}V` : null,
-    e.internal_resistance ? `${e.internal_resistance}mΩ` : null,
+    e.internal_resistance != null ? `IR: ${e.internal_resistance.toFixed(3)} Ω` : null,
     e.beak_status ? `Status: ${e.beak_status[0].toUpperCase()}${e.beak_status.slice(1)}` : null,
     e.charge_percent != null ? `Charge: ${e.charge_percent}%` : null,
     e.match_number ? `Match ${e.match_number}` : null,
@@ -262,22 +263,26 @@ function renderChart(trend) {
   const ctx = canvas.getContext("2d");
   const W = canvas.offsetWidth || 340;
   const H = 140;
+  const warnThreshold = 0.022;
+  const retireThreshold = 0.030;
+  const padValue = 0.005;
   canvas.width = W;
   canvas.height = H;
 
   const irs = trend.map((p) => p.ir);
-  const min = Math.max(0, Math.min(...irs) - 5);
-  const max = Math.max(...irs) + 5;
+  const min = Math.max(0, Math.min(...irs, warnThreshold) - padValue);
+  const max = Math.max(...irs, retireThreshold) + padValue;
   const pad = { t: 10, r: 10, b: 30, l: 40 };
   const chartW = W - pad.l - pad.r;
   const chartH = H - pad.t - pad.b;
+  const valueRange = Math.max(max - min, 0.001);
 
   const xScale = (i) => pad.l + (i / (trend.length - 1)) * chartW;
-  const yScale = (v) => pad.t + chartH - ((v - min) / (max - min)) * chartH;
+  const yScale = (v) => pad.t + chartH - ((v - min) / valueRange) * chartH;
 
   // Background zones
-  const warnY = yScale(22);
-  const retireY = yScale(30);
+  const warnY = yScale(warnThreshold);
+  const retireY = yScale(retireThreshold);
   ctx.fillStyle = "rgba(74,222,128,0.08)";
   ctx.fillRect(pad.l, warnY, chartW, chartH - (warnY - pad.t));
   ctx.fillStyle = "rgba(250,204,21,0.08)";
@@ -298,8 +303,8 @@ function renderChart(trend) {
   ctx.fillStyle = "#6b7280";
   ctx.font = "11px monospace";
   ctx.textAlign = "right";
-  [min, 22, 30, max].forEach((v) => {
-    ctx.fillText(v.toFixed(0), pad.l - 6, yScale(v) + 4);
+  [min, warnThreshold, retireThreshold, max].forEach((v) => {
+    ctx.fillText(v.toFixed(3), pad.l - 6, yScale(v) + 4);
   });
 
   // Line
@@ -313,7 +318,7 @@ function renderChart(trend) {
 
   // Dots
   trend.forEach((p, i) => {
-    const dotColor = p.ir >= 30 ? "#ef4444" : p.ir >= 22 ? "#facc15" : "#4ade80";
+    const dotColor = p.ir >= retireThreshold ? "#ef4444" : p.ir >= warnThreshold ? "#facc15" : "#4ade80";
     ctx.fillStyle = dotColor;
     ctx.beginPath();
     ctx.arc(xScale(i), yScale(p.ir), 4, 0, Math.PI * 2);
