@@ -4,19 +4,8 @@ from sqlalchemy import select, func
 from app.database import get_db
 from app.models.models import Battery, Event, Competition
 from app.models.schemas import BatterySummary, IRDataPoint
-from app.config import settings
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
-
-
-def _compute_status(ir: float | None) -> str:
-    if ir is None:
-        return "unknown"
-    if ir >= settings.ir_retire_threshold:
-        return "retire"
-    if ir >= settings.ir_warn_threshold:
-        return "warn"
-    return "good"
 
 
 @router.get("/", response_model=list[BatterySummary])
@@ -61,7 +50,7 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
             practice_uses=counts.get("practice", 0),
             competition_match_uses=0,
             competition_charge_cycles=0,
-            status=_compute_status(float(beak.internal_resistance) if beak and beak.internal_resistance is not None else None),
+            status=beak.beak_status if beak and beak.beak_status is not None else "unknown",
             last_checked=beak.created_at if beak else None,
         ))
 
@@ -96,8 +85,8 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
             summary.competition_match_uses = competition_counts.get("match", 0)
             summary.competition_charge_cycles = competition_charge_result.scalar() or 0
 
-    # Sort: retire first, then warn, then good, then unknown
-    order = {"retire": 0, "warn": 1, "good": 2, "unknown": 3}
+    # Sort: bad first, then fair, then good, then unknown
+    order = {"bad": 0, "fair": 1, "good": 2, "unknown": 3}
     summaries.sort(key=lambda s: order[s.status])
     return summaries
 
