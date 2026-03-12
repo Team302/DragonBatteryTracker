@@ -11,7 +11,21 @@ async function request(method, path, body = null) {
   const res = await fetch(`${BASE}${path}`, opts);
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || "Request failed");
+    let message = "Request failed";
+    
+    if (err.detail) {
+      // Handle validation errors (array of error objects)
+      if (Array.isArray(err.detail)) {
+        message = err.detail
+          .map((e) => `${e.loc?.join(" → ") || "field"}: ${e.msg}`)
+          .join("; ");
+      } else {
+        // Handle simple error messages
+        message = err.detail;
+      }
+    }
+    
+    throw new Error(message);
   }
   return res.status === 204 ? null : res.json();
 }
