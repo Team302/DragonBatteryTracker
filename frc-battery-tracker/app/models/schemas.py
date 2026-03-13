@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional, Literal
 from pydantic import BaseModel, Field
 
 
-EventType = Literal["charge", "match", "practice", "beak_check", "incident", "retired"]
+EventType = Literal["charge", "match", "practice", "beak_check", "incident", "battery_health"]
 RotationStatus = Literal["ready", "charging", "in_use", "cool_down"]
 BeakStatus = Literal["bad", "fair", "good"]
 
@@ -18,6 +18,9 @@ class BatteryCreate(BaseModel):
     battery_model: Optional[str] = None
     capacity_ah: Optional[float] = None
     notes: Optional[str] = None
+    bad_cells: bool = False
+    comp_battery: bool = False
+    retired: bool = False
 
 
 class BatteryUpdate(BaseModel):
@@ -28,6 +31,8 @@ class BatteryUpdate(BaseModel):
     battery_model: Optional[str] = None
     capacity_ah: Optional[float] = None
     notes: Optional[str] = None
+    bad_cells: Optional[bool] = None
+    comp_battery: Optional[bool] = None
     retired: Optional[bool] = None
 
 
@@ -40,6 +45,8 @@ class BatteryResponse(BaseModel):
     battery_model: Optional[str]
     capacity_ah: Optional[float]
     notes: Optional[str]
+    bad_cells: bool
+    comp_battery: bool
     retired: bool
     rotation_status: str
     rotation_updated_at: Optional[datetime]
@@ -126,6 +133,9 @@ class EventCreate(BaseModel):
     voltage_1a: Optional[float] = Field(None, ge=0, le=20)
     voltage_18a: Optional[float] = Field(None, ge=0, le=20)
     internal_resistance: Optional[float] = Field(None, ge=0, le=1)
+    amp_hours: Optional[float] = Field(None, ge=0, le=100)
+    watt_hours: Optional[float] = Field(None, ge=0, le=1000)
+    tested_on: Optional[date] = None
     beak_status: Optional[BeakStatus] = None
     charge_percent: Optional[float] = Field(None, ge=0, le=1000)
     match_number: Optional[int] = Field(None, ge=1)
@@ -144,6 +154,9 @@ class EventResponse(BaseModel):
     voltage_1a: Optional[float]
     voltage_18a: Optional[float]
     internal_resistance: Optional[float]
+    amp_hours: Optional[float]
+    watt_hours: Optional[float]
+    tested_on: Optional[date]
     beak_status: Optional[BeakStatus]
     charge_percent: Optional[float]
     match_number: Optional[int]

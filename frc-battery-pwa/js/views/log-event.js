@@ -3,6 +3,7 @@ import { navigate } from "../app.js";
 
 const EVENT_TYPES = [
   { value: "beak_check", label: "🔬 Beak Check", fields: ["beak", "ir", "beak_status", "charge_percent"] },
+  { value: "battery_health", label: "🩺 Battery Health", fields: ["amp_hours", "watt_hours", "tested_on", "notes"] },
   { value: "charge", label: "⚡ Charged", fields: [] },
   { value: "match", label: "🏆 Match", fields: ["match_number"] },
   { value: "practice", label: "🔧 Practice", fields: [] },
@@ -43,6 +44,9 @@ export async function renderLogEvent(container, { id }) {
     const showIR = selected.fields.includes("ir");
     const showBeakStatus = selected.fields.includes("beak_status");
     const showChargePercent = selected.fields.includes("charge_percent");
+    const showAmpHours = selected.fields.includes("amp_hours");
+    const showWattHours = selected.fields.includes("watt_hours");
+    const showTestedOn = selected.fields.includes("tested_on");
     const showMatch = selected.fields.includes("match_number");
     const showNotes = selected.fields.includes("notes");
     const showRobot = selectedType === "match" || selectedType === "practice";
@@ -107,6 +111,24 @@ export async function renderLogEvent(container, { id }) {
           <div class="form-section">
             <label class="form-label" for="f-ir">Internal Resistance (Ω)</label>
             <input class="form-input" id="f-ir" type="number" step="0.001" min="0" placeholder="0.010">
+          </div>
+        ` : ""}
+        ${showAmpHours ? `
+          <div class="form-section">
+            <label class="form-label" for="f-ah">Amp Hours (Ah)</label>
+            <input class="form-input" id="f-ah" type="number" step="0.01" min="0" placeholder="11.74">
+          </div>
+        ` : ""}
+        ${showWattHours ? `
+          <div class="form-section">
+            <label class="form-label" for="f-wh">Watt Hours (Wh)</label>
+            <input class="form-input" id="f-wh" type="number" step="0.1" min="0" placeholder="134.0">
+          </div>
+        ` : ""}
+        ${showTestedOn ? `
+          <div class="form-section">
+            <label class="form-label" for="f-tested-on">Test Date</label>
+            <input class="form-input" id="f-tested-on" type="date">
           </div>
         ` : ""}
         ${showBeakStatus ? `
@@ -212,6 +234,16 @@ export async function renderLogEvent(container, { id }) {
         return;
       }
 
+      if (selectedType === "practice" && battery.comp_battery) {
+        const proceed = confirm("This battery is marked as a Comp Battery. Log a practice event anyway?");
+        if (!proceed) return;
+      }
+
+      if (selectedType === "match" && !battery.comp_battery) {
+        const proceed = confirm("This battery is not marked as a Comp Battery. Log a match event anyway?");
+        if (!proceed) return;
+      }
+
       btn.disabled = true;
       btn.textContent = "Saving...";
       errEl.textContent = "";
@@ -221,6 +253,9 @@ export async function renderLogEvent(container, { id }) {
       const v1 = document.getElementById("f-v1")?.value;
       const v18 = document.getElementById("f-v18")?.value;
       const ir = document.getElementById("f-ir")?.value;
+      const ah = document.getElementById("f-ah")?.value;
+      const wh = document.getElementById("f-wh")?.value;
+      const testedOn = document.getElementById("f-tested-on")?.value;
       const beakStatus = document.getElementById("f-beak-status")?.value;
       const chargePercent = document.getElementById("f-charge-percent")?.value;
       const match = document.getElementById("f-match")?.value;
@@ -234,6 +269,9 @@ export async function renderLogEvent(container, { id }) {
       if (v1) payload.voltage_1a = parseFloat(v1);
       if (v18) payload.voltage_18a = parseFloat(v18);
       if (ir) payload.internal_resistance = parseFloat(ir);
+      if (ah) payload.amp_hours = parseFloat(ah);
+      if (wh) payload.watt_hours = parseFloat(wh);
+      if (testedOn) payload.tested_on = testedOn;
       if (beakStatus) payload.beak_status = beakStatus;
       if (chargePercent !== undefined && chargePercent !== "") payload.charge_percent = parseFloat(chargePercent);
       if (match) payload.match_number = parseInt(match);

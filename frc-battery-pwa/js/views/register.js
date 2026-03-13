@@ -32,12 +32,12 @@ export async function renderRegister(container, params = {}) {
 
     <div class="form-section">
       <label class="form-label" for="f-mfr">Manufacturer</label>
-      <input class="form-input" id="f-mfr" type="text" placeholder="MK Battery, Werker, etc.">
+      <input class="form-input" id="f-mfr" type="text" placeholder="Interstate">
     </div>
 
     <div class="form-section">
       <label class="form-label" for="f-model">Battery Model</label>
-      <input class="form-input" id="f-model" type="text" placeholder="ES17-12, NP18-12B, etc.">
+      <input class="form-input" id="f-model" type="text" placeholder="SLA1116">
     </div>
 
     <div class="form-section">

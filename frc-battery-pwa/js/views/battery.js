@@ -30,10 +30,8 @@ export async function renderBattery(container, { id }) {
     const status = beak?.beak_status ?? "unknown";
     const statusTone = { good: "good", fair: "warn", bad: "retire", unknown: "unknown" }[status];
     const statusLabel = { good: "Good", fair: "Fair", bad: "Bad", unknown: "No Data" }[status];
-    const purchasedDisplay = battery.purchased
-      ? new Date(battery.purchased).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
-      : "-";
-    const purchasedInput = battery.purchased ? new Date(battery.purchased).toISOString().slice(0, 10) : "";
+    const purchasedDisplay = formatDateOnlyForDisplay(battery.purchased);
+    const purchasedInput = formatDateOnlyForInput(battery.purchased);
 
     document.getElementById("batt-body").innerHTML = `
       <div class="health-banner status-${statusTone}">
@@ -73,7 +71,6 @@ export async function renderBattery(container, { id }) {
 
       <div class="action-row">
         <button class="btn-primary" id="log-btn">Log Event</button>
-        ${battery.retired ? "" : `<button class="btn-danger" id="retire-btn">Retire</button>`}
       </div>
 
       <div class="history-section">
@@ -110,6 +107,24 @@ export async function renderBattery(container, { id }) {
               <span class="event-detail">${battery.capacity_ah != null ? `${battery.capacity_ah} Ah` : "-"}</span>
             </div>
           </div>
+          <div class="event-row">
+            <div class="event-info">
+              <span class="event-type">Comp Battery</span>
+              <span class="event-detail">${battery.comp_battery ? "Yes" : "No"}</span>
+            </div>
+          </div>
+          <div class="event-row">
+            <div class="event-info">
+              <span class="event-type">Bad Cells</span>
+              <span class="event-detail">${battery.bad_cells ? "Yes" : "No"}</span>
+            </div>
+          </div>
+          <div class="event-row">
+            <div class="event-info">
+              <span class="event-type">Retired</span>
+              <span class="event-detail">${battery.retired ? "Yes" : "No"}</span>
+            </div>
+          </div>
         </div>
 
         <div class="action-row">
@@ -119,11 +134,11 @@ export async function renderBattery(container, { id }) {
         <div id="edit-details-form" class="hidden">
           <div class="form-section">
             <label class="form-label" for="f-edit-mfr">Manufacturer</label>
-            <input class="form-input" id="f-edit-mfr" type="text" value="${escapeHtml(battery.manufacturer || "")}" placeholder="MK Battery, Werker, etc.">
+            <input class="form-input" id="f-edit-mfr" type="text" value="${escapeHtml(battery.manufacturer || "")}" placeholder="Interstate">
           </div>
           <div class="form-section">
             <label class="form-label" for="f-edit-model">Battery Model</label>
-            <input class="form-input" id="f-edit-model" type="text" value="${escapeHtml(battery.battery_model || "")}" placeholder="ES17-12, NP18-12B, etc.">
+            <input class="form-input" id="f-edit-model" type="text" value="${escapeHtml(battery.battery_model || "")}" placeholder="SLA1116">
           </div>
           <div class="form-section">
             <label class="form-label" for="f-edit-cap">Capacity (Ah)</label>
@@ -132,6 +147,18 @@ export async function renderBattery(container, { id }) {
           <div class="form-section">
             <label class="form-label" for="f-edit-purchased">Purchase Date</label>
             <input class="form-input" id="f-edit-purchased" type="date" value="${purchasedInput}">
+          </div>
+          <div class="form-section">
+            <label class="form-label" for="f-edit-comp">Comp Battery</label>
+            <input id="f-edit-comp" type="checkbox" ${battery.comp_battery ? "checked" : ""}>
+          </div>
+          <div class="form-section">
+            <label class="form-label" for="f-edit-bad-cells">Bad Cells</label>
+            <input id="f-edit-bad-cells" type="checkbox" ${battery.bad_cells ? "checked" : ""}>
+          </div>
+          <div class="form-section">
+            <label class="form-label" for="f-edit-retired">Retired</label>
+            <input id="f-edit-retired" type="checkbox" ${battery.retired ? "checked" : ""}>
           </div>
           <div class="action-row">
             <button class="btn-primary" id="save-details-btn" type="button">Save Battery Details</button>
@@ -166,12 +193,18 @@ export async function renderBattery(container, { id }) {
       const model = document.getElementById("f-edit-model").value.trim();
       const cap = document.getElementById("f-edit-cap").value;
       const purchased = document.getElementById("f-edit-purchased").value;
+      const compBattery = document.getElementById("f-edit-comp").checked;
+      const badCells = document.getElementById("f-edit-bad-cells").checked;
+      const retired = document.getElementById("f-edit-retired").checked;
 
       const payload = {
         manufacturer: mfr || null,
         battery_model: model || null,
         capacity_ah: cap === "" ? null : parseFloat(cap),
         purchased: purchased ? new Date(purchased).toISOString() : null,
+        comp_battery: compBattery,
+        bad_cells: badCells,
+        retired,
       };
 
       try {
@@ -184,12 +217,6 @@ export async function renderBattery(container, { id }) {
         saveBtn.disabled = false;
         saveBtn.textContent = "Save Battery Details";
       }
-    });
-
-    document.getElementById("retire-btn")?.addEventListener("click", async () => {
-      if (!confirm("Mark this battery as retired?")) return;
-      await api.logEvent(id, { event_type: "retired" });
-      navigate("dashboard");
     });
 
     if (trend.length >= 2) renderChart(trend);
@@ -208,10 +235,29 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function formatDateOnlyForInput(dateValue) {
+  if (!dateValue) return "";
+  if (typeof dateValue === "string" && dateValue.includes("T")) return dateValue.split("T")[0];
+  if (typeof dateValue === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) return dateValue;
+
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
+function formatDateOnlyForDisplay(dateValue) {
+  const dateOnly = formatDateOnlyForInput(dateValue);
+  if (!dateOnly) return "-";
+
+  const [year, month, day] = dateOnly.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+}
+
 function renderEvent(e) {
   const icons = {
     charge: "⚡", match: "🏆", practice: "🔧",
-    beak_check: "📊", incident: "⚠️", retired: "🪦",
+    beak_check: "📊", battery_health: "🩺", incident: "⚠️", retired: "🪦",
   };
   const icon = icons[e.event_type] || "•";
   const label = e.event_type.replace("_", " ");
@@ -238,12 +284,16 @@ function renderEvent(e) {
     ...beakVoltages,
     e.event_type !== "beak_check" && e.voltage ? `${e.voltage}V` : null,
     e.internal_resistance != null ? `IR: ${e.internal_resistance.toFixed(3)} Ω` : null,
+    e.amp_hours != null ? `${e.amp_hours.toFixed(2)}Ah` : null,
+    e.watt_hours != null ? `${e.watt_hours.toFixed(1)}Wh` : null,
+    e.tested_on ? `Tested: ${e.tested_on}` : null,
     e.beak_status ? `Status: ${e.beak_status[0].toUpperCase()}${e.beak_status.slice(1)}` : null,
     e.charge_percent != null ? `Charge: ${e.charge_percent}%` : null,
     e.match_number ? `Match ${e.match_number}` : null,
     robotInfo,
     e.logged_by ? `by ${e.logged_by}` : null,
   ].filter(Boolean).join(" · ");
+  const noteText = e.notes?.trim();
 
   return `
     <div class="event-row">
@@ -251,6 +301,7 @@ function renderEvent(e) {
       <div class="event-info">
         <span class="event-type">${label}</span>
         ${detail ? `<span class="event-detail">${detail}</span>` : ""}
+        ${noteText ? `<span class="event-note">${escapeHtml(noteText)}</span>` : ""}
       </div>
       <span class="event-date">${date}</span>
     </div>

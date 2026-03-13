@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Optional
-from sqlalchemy import Integer, String, Boolean, Numeric, DateTime, ForeignKey, Text
+from sqlalchemy import Integer, String, Boolean, Numeric, DateTime, Date, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
@@ -20,6 +20,8 @@ class Battery(Base):
     battery_model: Mapped[str | None] = mapped_column(String(100), nullable=True)
     capacity_ah: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    bad_cells: Mapped[bool] = mapped_column(Boolean, default=False)
+    comp_battery: Mapped[bool] = mapped_column(Boolean, default=False)
     retired: Mapped[bool] = mapped_column(Boolean, default=False)
     rotation_status: Mapped[str] = mapped_column(String(50), default="ready")  # ready | charging | in_use | cool_down
     rotation_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -42,6 +44,9 @@ class Event(Base):
     voltage_1a: Mapped[float | None] = mapped_column(Numeric(5, 3), nullable=True)
     voltage_18a: Mapped[float | None] = mapped_column(Numeric(5, 3), nullable=True)
     internal_resistance: Mapped[float | None] = mapped_column(Numeric(7, 3), nullable=True)  # Ω
+    amp_hours: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)  # Ah
+    watt_hours: Mapped[float | None] = mapped_column(Numeric(6, 1), nullable=True)  # Wh
+    tested_on: Mapped[date | None] = mapped_column(Date(), nullable=True)
     beak_status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # bad | fair | good
     charge_percent: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)  # 0-100%
     match_number: Mapped[int | None] = mapped_column(Integer, nullable=True)

@@ -5,9 +5,17 @@ export async function renderDashboard(container) {
   container.innerHTML = `
     <div class="view-header">
       <h1 class="view-title">Fleet</h1>
-      <button class="btn-icon" id="add-battery-btn" title="Add battery">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </button>
+      <div>
+        <button class="btn-icon" id="export-csv-btn" title="Export battery CSV">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+        </button>
+        <button class="btn-icon" id="export-events-csv-btn" title="Export battery events CSV">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"/><path d="M7 6V4h10v2"/><path d="M8 10h8"/><path d="M8 14h8"/><path d="M8 18h5"/></svg>
+        </button>
+        <button class="btn-icon" id="add-battery-btn" title="Add battery">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
     </div>
     <div class="stats-row" id="stats-row">
       <div class="stat-pill skeleton"></div>
@@ -20,6 +28,38 @@ export async function renderDashboard(container) {
   `;
 
   document.getElementById("add-battery-btn").onclick = () => navigate("register");
+  document.getElementById("export-csv-btn").onclick = async () => {
+    try {
+      const { blob, contentDisposition } = await api.exportBatteriesCsv();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const match = contentDisposition?.match(/filename="?([^";]+)"?/i);
+      a.href = url;
+      a.download = match?.[1] || "battery_export.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert(`Export failed: ${e.message}`);
+    }
+  };
+  document.getElementById("export-events-csv-btn").onclick = async () => {
+    try {
+      const { blob, contentDisposition } = await api.exportEventsCsv();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const match = contentDisposition?.match(/filename="?([^";]+)"?/i);
+      a.href = url;
+      a.download = match?.[1] || "battery_events_export.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert(`Export failed: ${e.message}`);
+    }
+  };
 
   try {
     const [summaries, stats] = await Promise.all([api.getDashboard(), api.getStats()]);

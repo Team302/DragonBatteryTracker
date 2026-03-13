@@ -1,9 +1,12 @@
 from datetime import datetime, timezone
+import csv
+from io import StringIO
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
-from app.models.models import Battery
+from app.models.models import Battery, Event
 from app.models.schemas import BatteryCreate, BatteryUpdate, BatteryResponse, BatteryRotationUpdate
 
 router = APIRouter(prefix="/batteries", tags=["batteries"])
@@ -30,6 +33,112 @@ async def list_batteries(retired: bool | None = None, db: AsyncSession = Depends
         query = query.where(Battery.retired == retired)
     result = await db.execute(query.order_by(Battery.label))
     return result.scalars().all()
+
+
+@router.get("/export/csv")
+async def export_batteries_csv(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Battery).order_by(Battery.label))
+    batteries = result.scalars().all()
+
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "id",
+        "label",
+        "nfc_uid",
+        "purchased",
+        "manufacturer",
+        "battery_model",
+        "capacity_ah",
+        "notes",
+        "bad_cells",
+        "comp_battery",
+        "retired",
+        "rotation_status",
+        "rotation_updated_at",
+        "created_at",
+    ])
+
+    for b in batteries:
+        writer.writerow([
+            b.id,
+            b.label,
+            b.nfc_uid or "",
+            b.purchased.isoformat() if b.purchased else "",
+            b.manufacturer or "",
+            b.battery_model or "",
+            b.capacity_ah if b.capacity_ah is not None else "",
+            b.notes or "",
+            b.bad_cells,
+            b.comp_battery,
+            b.retired,
+            b.rotation_status,
+            b.rotation_updated_at.isoformat() if b.rotation_updated_at else "",
+            b.created_at.isoformat() if b.created_at else "",
+        ])
+
+    output.seek(0)
+    filename = f"battery_export_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.csv"
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers=headers)
+
+
+@router.get("/events/export/csv")
+async def export_events_csv(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Event).order_by(Event.created_at.desc()))
+    events = result.scalars().all()
+
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "id",
+        "battery_id",
+        "event_type",
+        "created_at",
+        "tested_on",
+        "amp_hours",
+        "watt_hours",
+        "voltage",
+        "voltage_0a",
+        "voltage_1a",
+        "voltage_18a",
+        "internal_resistance",
+        "beak_status",
+        "charge_percent",
+        "match_number",
+        "logged_by",
+        "notes",
+        "robot_id",
+        "competition_id",
+    ])
+
+    for e in events:
+        writer.writerow([
+            e.id,
+            e.battery_id,
+            e.event_type,
+            e.created_at.isoformat() if e.created_at else "",
+            e.tested_on.isoformat() if e.tested_on else "",
+            e.amp_hours if e.amp_hours is not None else "",
+            e.watt_hours if e.watt_hours is not None else "",
+            e.voltage if e.voltage is not None else "",
+            e.voltage_0a if e.voltage_0a is not None else "",
+            e.voltage_1a if e.voltage_1a is not None else "",
+            e.voltage_18a if e.voltage_18a is not None else "",
+            e.internal_resistance if e.internal_resistance is not None else "",
+            e.beak_status or "",
+            e.charge_percent if e.charge_percent is not None else "",
+            e.match_number if e.match_number is not None else "",
+            e.logged_by or "",
+            e.notes or "",
+            e.robot_id if e.robot_id is not None else "",
+            e.competition_id if e.competition_id is not None else "",
+        ])
+
+    output.seek(0)
+    filename = f"battery_events_export_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.csv"
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers=headers)
 
 
 @router.get("/{battery_id}", response_model=BatteryResponse)

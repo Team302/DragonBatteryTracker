@@ -221,6 +221,7 @@ input, textarea { font: inherit; color: inherit; }
 .event-info { flex: 1; }
 .event-type  { font-size: 14px; font-weight: 500; text-transform: capitalize; display: block; }
 .event-detail { font-size: 12px; color: var(--text-2); display: block; margin-top: 2px; }
+.event-note { font-size: 12px; color: var(--text); display: block; margin-top: 4px; white-space: pre-wrap; }
 .event-date  { font-size: 12px; color: var(--text-3); white-space: nowrap; padding-top: 2px; }
 
 /* ── Forms ──────────────────────────────────────────────────────── */

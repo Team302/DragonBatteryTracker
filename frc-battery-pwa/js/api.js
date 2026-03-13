@@ -30,6 +30,19 @@ async function request(method, path, body = null) {
   return res.status === 204 ? null : res.json();
 }
 
+async function requestBlob(method, path) {
+  const res = await fetch(`${BASE}${path}`, { method });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || "Request failed");
+  }
+
+  return {
+    blob: await res.blob(),
+    contentDisposition: res.headers.get("Content-Disposition"),
+  };
+}
+
 export const api = {
   // Batteries
   listBatteries: (retired = null) => {
@@ -40,6 +53,8 @@ export const api = {
   getBatteryByNfc: (uid) => request("GET", `/batteries/nfc/${encodeURIComponent(uid)}`),
   createBattery: (data) => request("POST", "/batteries/", data),
   updateBattery: (id, data) => request("PATCH", `/batteries/${id}`, data),
+  exportBatteriesCsv: () => requestBlob("GET", "/batteries/export/csv"),
+  exportEventsCsv: () => requestBlob("GET", "/batteries/events/export/csv"),
 
   // Events
   logEvent: (batteryId, data) => request("POST", `/batteries/${batteryId}/events/`, data),

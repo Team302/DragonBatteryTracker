@@ -58,6 +58,14 @@ async def log_event(battery_id: int, payload: EventCreate, db: AsyncSession = De
             detail="beak_check events require a voltage reading or internal_resistance",
         )
 
+    # Validate battery_health has Ah, Wh, and tested_on date.
+    if payload.event_type == "battery_health":
+        if payload.amp_hours is None or payload.watt_hours is None or payload.tested_on is None:
+            raise HTTPException(
+                status_code=422,
+                detail="battery_health events require amp_hours, watt_hours, and tested_on",
+            )
+
     event_data = payload.model_dump()
     # Keep legacy voltage populated from 0A for backward compatibility.
     if payload.voltage_0a is not None:
@@ -65,10 +73,6 @@ async def log_event(battery_id: int, payload: EventCreate, db: AsyncSession = De
 
     event = Event(battery_id=battery.id, **event_data)
     db.add(event)
-
-    # Auto-retire if event type is retired
-    if payload.event_type == "retired":
-        battery.retired = True
 
     # Auto-update rotation status, but do not override very recent manual updates.
     now = datetime.now(timezone.utc)
