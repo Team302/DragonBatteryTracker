@@ -4,7 +4,7 @@ set -eu
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR=/backups
 BACKUP_FILE="${BACKUP_DIR}/${PGDATABASE}_${TIMESTAMP}.sql.gz"
-RETENTION_DAYS=${RETENTION_DAYS:-7}
+RETENTION_DAYS=${RETENTION_DAYS:-30}
 
 echo "[$(date)] Starting backup of ${PGDATABASE}..."
 pg_dump -h "$PGHOST" -U "$PGUSER" "$PGDATABASE" | gzip > "$BACKUP_FILE"
