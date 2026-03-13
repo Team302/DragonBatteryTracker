@@ -17,6 +17,23 @@ services:
     ports:
       - "5432:5432"  # Remove this line if you don't need direct DB access from host
 
+  db-backup:
+    container_name: frc-postgres-backup
+    build: ./postgres-backup
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: ${POSTGRES_USER:-frc}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-frcpassword}
+      PGDATABASE: ${POSTGRES_DB:-frc_batteries}
+      RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+
   api:
     container_name: frc-battery-tracker-api
     build: ./frc-battery-tracker
