@@ -165,5 +165,8 @@ window.addEventListener("load", () => {
 
 // Register service worker
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js").catch(console.error);
+  navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).then((registration) => {
+    registration.update().catch(() => {});
+    setInterval(() => registration.update().catch(() => {}), 60 * 1000);
+  }).catch(console.error);
 }
