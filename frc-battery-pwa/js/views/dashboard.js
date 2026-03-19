@@ -4,7 +4,7 @@ import { navigate } from "../app.js";
 export async function renderDashboard(container) {
   container.innerHTML = `
     <div class="view-header">
-      <h1 class="view-title">Fleet</h1>
+        <h1 class="view-title">Batteries</h1>
       <div>
         <button class="btn-icon" id="export-csv-btn" title="Export battery CSV">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>

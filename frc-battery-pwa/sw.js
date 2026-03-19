@@ -1,4 +1,4 @@
-const CACHE = "frc-battery-v1";
+const CACHE = "frc-battery-v2";
 const STATIC = [
   "/",
   "/index.html",
@@ -7,8 +7,10 @@ const STATIC = [
   "/js/api.js",
   "/js/views/dashboard.js",
   "/js/views/battery.js",
+  "/js/views/edit-battery.js",
   "/js/views/log-event.js",
   "/js/views/register.js",
+  "/js/utils/qr-scanner.js",
   "/manifest.json",
 ];
 

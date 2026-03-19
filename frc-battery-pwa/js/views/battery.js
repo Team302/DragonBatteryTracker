@@ -8,11 +8,14 @@ export async function renderBattery(container, { id }) {
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
       <h1 class="view-title" id="batt-title">Battery</h1>
-      <div></div>
+      <button class="btn-icon" id="edit-btn" title="Edit battery">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L21 3z"/></svg>
+      </button>
     </div>
     <div id="batt-body"><div class="loading-ring"></div></div>
   `;
   document.getElementById("back-btn").onclick = () => navigate("dashboard");
+  document.getElementById("edit-btn").onclick = () => navigate("edit-battery", { id });
 
   try {
     const [battery, events, trend] = await Promise.all([
