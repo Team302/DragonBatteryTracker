@@ -1,4 +1,4 @@
-const CACHE = "frc-battery-v1";
+const CACHE = "frc-battery-v4";
 const STATIC = [
   "/",
   "/index.html",
@@ -28,17 +28,22 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
+  const isSameOrigin = url.origin === self.location.origin;
+  const isScanRoute = url.pathname.startsWith("/scan/");
 
-  // API calls: network first, no caching
-  if (url.pathname.startsWith("/api/")) {
-    e.respondWith(fetch(e.request).catch(() => new Response(
-      JSON.stringify({ error: "Offline — no network connection" }),
-      { status: 503, headers: { "Content-Type": "application/json" } }
-    )));
+  // Never cache cross-origin requests (API calls to FastAPI)
+  // and never cache /scan/ routes so NFC lookups always hit the network.
+  if (!isSameOrigin || isScanRoute) {
+    e.respondWith(
+      fetch(e.request).catch(() => new Response(
+        JSON.stringify({ error: "Offline — no network connection" }),
+        { status: 503, headers: { "Content-Type": "application/json" } }
+      ))
+    );
     return;
   }
 
-  // Static assets: cache first
+  // Same-origin static assets: cache first.
   e.respondWith(
     caches.match(e.request).then((cached) => cached || fetch(e.request))
   );

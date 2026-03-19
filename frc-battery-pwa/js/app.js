@@ -7,6 +7,7 @@ import { renderRotation } from "./views/rotation.js";
 import { renderCompetitions } from "./views/competitions.js";
 
 const container = document.getElementById("app");
+let activeScanToken = 0;
 
 // ── Router ────────────────────────────────────────────────────────
 
@@ -36,10 +37,11 @@ function parseHash() {
 
 async function route() {
   const { view, params } = parseHash();
+  const hasExplicitHashView = window.location.hash.length > 1;
 
-  // NFC tap arrives as /scan/{uid} — handle via URL path
-  if (window.location.pathname.startsWith("/scan/")) {
-    const uid = window.location.pathname.split("/scan/")[1];
+  // NFC tap arrives as /scan/{uid} — only handle when no hash route is set yet.
+  if (window.location.pathname.startsWith("/scan/") && !hasExplicitHashView) {
+    const uid = decodeURIComponent(window.location.pathname.replace(/^\/scan\//, ""));
     await handleNfcScan(uid);
     return;
   }
@@ -64,18 +66,75 @@ async function route() {
 }
 
 async function handleNfcScan(uid) {
-  container.innerHTML = `<div class="scan-splash"><div class="loading-ring"></div><p>Looking up battery…</p></div>`;
+  const scanToken = ++activeScanToken;
+  const normalizedUid = String(uid || "").trim();
+  const encodedUid = encodeURIComponent(normalizedUid);
+  const apiBase = (window.API_BASE || "/api").replace(/\/$/, "");
+  const lookupUrl = `${apiBase}/batteries/nfc/${encodedUid}`;
+
+  container.innerHTML = `
+    <div class="scan-splash">
+      <div class="loading-ring"></div>
+      <p>Looking up battery…</p>
+      <div class="scan-debug">
+        <span class="debug-label">Tag UID</span>
+        <span class="debug-value">${escapeHtml(normalizedUid)}</span>
+        <span class="debug-label">API URL</span>
+        <span class="debug-value">${escapeHtml(lookupUrl)}</span>
+        <span class="debug-label">Status</span>
+        <span class="debug-value">Waiting for response...</span>
+      </div>
+    </div>
+  `;
+
+  const { api } = await import("./api.js");
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error("Request timed out after 10 seconds")), 10000);
+  });
+
   try {
-    const { api } = await import("./api.js");
-    const battery = await api.getBatteryByNfc(uid);
+    const battery = await Promise.race([api.getBatteryByNfc(normalizedUid), timeout]);
+    if (scanToken !== activeScanToken) return;
+    clearTimeout(timeoutId);
     navigate("battery", { id: battery.id });
   } catch (e) {
-    if (e.message.includes("not registered")) {
-      navigate("register", { uid });
+    if (scanToken !== activeScanToken) return;
+    clearTimeout(timeoutId);
+    const message = e?.message || "Request failed";
+    const isNotFound = message.includes("not registered") || message.includes("404");
+    if (isNotFound) {
+      navigate("register", { uid: normalizedUid });
     } else {
-      container.innerHTML = `<div class="error-msg">⚠ ${e.message}</div>`;
+      container.innerHTML = `
+        <div class="scan-splash">
+          <div class="scan-error">
+            <p class="error-heading">⚠ Scan failed</p>
+            <p class="error-msg">${escapeHtml(message)}</p>
+            <div class="scan-debug">
+              <span class="debug-label">Tag UID read</span>
+              <span class="debug-value">${escapeHtml(normalizedUid)}</span>
+              <span class="debug-label">API URL tried</span>
+              <span class="debug-value">${escapeHtml(lookupUrl)}</span>
+            </div>
+            <button class="btn-primary" id="scan-back-btn">Back to Batteries</button>
+          </div>
+        </div>
+      `;
+      document.getElementById("scan-back-btn").onclick = () => {
+        window.location.hash = "#dashboard";
+      };
     }
   }
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 // ── Web NFC (Android Chrome only) ────────────────────────────────
