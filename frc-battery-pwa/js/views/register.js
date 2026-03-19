@@ -1,5 +1,6 @@
 import { api } from "../api.js";
 import { navigate } from "../app.js";
+import { setupQrScanner } from "../utils/qr-scanner.js";
 
 export async function renderRegister(container, params = {}) {
   // If we landed here from an NFC/QR scan with an unknown UID, pre-fill it
@@ -103,55 +104,5 @@ export async function renderRegister(container, params = {}) {
     }
   };
 
-  setupQrScanner();
-}
-
-function setupQrScanner() {
-  const overlay = document.getElementById("qr-overlay");
-  const video = document.getElementById("qr-video");
-  const canvas = document.getElementById("qr-canvas");
-  const scanBtn = document.getElementById("scan-qr-btn");
-  const closeBtn = document.getElementById("close-qr");
-  let stream = null;
-  let animFrame = null;
-
-  scanBtn.onclick = async () => {
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      video.srcObject = stream;
-      overlay.classList.remove("hidden");
-      scanFrame();
-    } catch {
-      alert("Camera access denied or unavailable.");
-    }
-  };
-
-  closeBtn.onclick = stopScanner;
-
-  function stopScanner() {
-    stream?.getTracks().forEach((t) => t.stop());
-    cancelAnimationFrame(animFrame);
-    overlay.classList.add("hidden");
-  }
-
-  function scanFrame() {
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext("2d").drawImage(video, 0, 0);
-      const imageData = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height);
-
-      // Use the BarcodeDetector API if available (Chrome Android, modern browsers)
-      if ("BarcodeDetector" in window) {
-        const detector = new BarcodeDetector({ formats: ["qr_code"] });
-        detector.detect(canvas).then((codes) => {
-          if (codes.length > 0) {
-            document.getElementById("f-nfc").value = codes[0].rawValue;
-            stopScanner();
-          }
-        });
-      }
-    }
-    animFrame = requestAnimationFrame(scanFrame);
-  }
+  setupQrScanner("f-nfc", "scan-qr-btn", "qr-overlay", "qr-video", "qr-canvas", "close-qr");
 }

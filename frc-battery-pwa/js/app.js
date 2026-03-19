@@ -1,5 +1,6 @@
 import { renderDashboard } from "./views/dashboard.js";
 import { renderBattery } from "./views/battery.js";
+import { renderEditBattery } from "./views/edit-battery.js";
 import { renderLogEvent } from "./views/log-event.js";
 import { renderRegister } from "./views/register.js";
 import { renderRobots } from "./views/robots.js";
@@ -14,6 +15,7 @@ const ROUTES = {
   rotation: renderRotation,
   dashboard: renderDashboard,
   battery: renderBattery,
+  "edit-battery": renderEditBattery,
   "log-event": renderLogEvent,
   register: renderRegister,
   robots: renderRobots,
@@ -36,10 +38,11 @@ function parseHash() {
 
 async function route() {
   const { view, params } = parseHash();
+  const hasExplicitHashView = window.location.hash.length > 1;
 
-  // NFC tap arrives as /scan/{uid} — handle via URL path
-  if (window.location.pathname.startsWith("/scan/")) {
-    const uid = window.location.pathname.split("/scan/")[1];
+  // NFC tap arrives as /scan/{uid} — only handle when no hash view is set yet.
+  if (window.location.pathname.startsWith("/scan/") && !hasExplicitHashView) {
+    const uid = decodeURIComponent(window.location.pathname.replace(/^\/scan\//, ""));
     await handleNfcScan(uid);
     return;
   }
