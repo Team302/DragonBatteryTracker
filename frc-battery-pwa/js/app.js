@@ -1,5 +1,6 @@
 import { renderDashboard } from "./views/dashboard.js";
 import { renderBattery } from "./views/battery.js";
+import { renderEditBattery } from "./views/edit-battery.js";
 import { renderLogEvent } from "./views/log-event.js";
 import { renderRegister } from "./views/register.js";
 import { renderRobots } from "./views/robots.js";
@@ -15,6 +16,7 @@ const ROUTES = {
   rotation: renderRotation,
   dashboard: renderDashboard,
   battery: renderBattery,
+  "edit-battery": renderEditBattery,
   "log-event": renderLogEvent,
   register: renderRegister,
   robots: renderRobots,
