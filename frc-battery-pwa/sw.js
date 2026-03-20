@@ -1,8 +1,9 @@
-const CACHE = "frc-battery-v4";
+const CACHE = "frc-battery-v5";
 const STATIC = [
   "/",
   "/index.html",
   "/css/app.css",
+  "/js/app.js?v=20260319a",
   "/js/app.js",
   "/js/api.js",
   "/js/views/dashboard.js",
@@ -32,6 +33,11 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   const isSameOrigin = url.origin === self.location.origin;
   const isScanRoute = url.pathname.startsWith("/scan/");
+  const isAppShellRequest =
+    e.request.mode === "navigate" ||
+    url.pathname === "/index.html" ||
+    url.pathname.startsWith("/js/") ||
+    url.pathname.startsWith("/css/");
 
   // Never cache cross-origin requests (API calls to FastAPI)
   // and never cache /scan/ routes so NFC lookups always hit the network.
@@ -41,6 +47,14 @@ self.addEventListener("fetch", (e) => {
         JSON.stringify({ error: "Offline — no network connection" }),
         { status: 503, headers: { "Content-Type": "application/json" } }
       ))
+    );
+    return;
+  }
+
+  // App shell files should be network-first to avoid stale clients.
+  if (isAppShellRequest) {
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match(e.request))
     );
     return;
   }
