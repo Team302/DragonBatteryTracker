@@ -1,14 +1,69 @@
 import { api } from "../api.js";
 
+function toDateOnly(value) {
+  if (!value) return "";
+  if (typeof value === "string") {
+    const m = value.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (m) return m[1];
+  }
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function fmtDate(d) {
   if (!d) return "";
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const dateOnly = toDateOnly(d);
+  if (!dateOnly) return "";
+  const [y, m, day] = dateOnly.split("-").map(Number);
+  return new Date(y, m - 1, day).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function fmtRange(start, end) {
   if (!start && !end) return "Dates not set";
   if (start && end) return `${fmtDate(start)} - ${fmtDate(end)}`;
   return start ? `Starts ${fmtDate(start)}` : `Ends ${fmtDate(end)}`;
+}
+
+function parseDateOnlyToLocalDate(value) {
+  const dateOnly = toDateOnly(value);
+  if (!dateOnly) return null;
+  const [y, m, day] = dateOnly.split("-").map(Number);
+  return new Date(y, m - 1, day);
+}
+
+function daysBetween(a, b) {
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return Math.round((a.getTime() - b.getTime()) / msPerDay);
+}
+
+function fmtRelativeWindow(start, end) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const startDate = parseDateOnlyToLocalDate(start);
+  const endDate = parseDateOnlyToLocalDate(end);
+
+  if (startDate && startDate > today) {
+    const days = daysBetween(startDate, today);
+    if (days === 1) return "Starts in 1 day";
+    return `Starts in ${days} days`;
+  }
+
+  if (endDate && endDate < today) {
+    const days = daysBetween(today, endDate);
+    if (days === 1) return "Ended 1 day ago";
+    return `Ended ${days} days ago`;
+  }
+
+  return "";
 }
 
 export async function renderCompetitions(container) {
@@ -60,12 +115,14 @@ export async function renderCompetitions(container) {
   }
 
   function renderCompCard(c) {
+    const relativeWindow = fmtRelativeWindow(c.start_date, c.end_date);
     return `
       <button class="battery-card comp-card ${c.active ? "status-good" : ""}" data-id="${c.id}">
         <div class="card-left">
           <div class="card-info">
             <span class="card-label">${c.name}</span>
             <span class="card-meta">${c.location || "No location"} · ${fmtRange(c.start_date, c.end_date)}</span>
+            ${relativeWindow ? `<span class="card-meta">${relativeWindow}</span>` : ""}
             <span class="card-meta">${c.matchCount} matches · ${c.chargeCount} charges</span>
           </div>
         </div>
@@ -80,11 +137,13 @@ export async function renderCompetitions(container) {
 
     try {
       const [comp, summary] = await Promise.all([api.getCompetition(id), api.getCompetitionSummary(id)]);
+      const relativeWindow = fmtRelativeWindow(comp.start_date, comp.end_date);
       body.innerHTML = `
         <div class="chart-section">
           <h3 class="section-heading">${comp.name}</h3>
           <p class="card-meta">${comp.location || "No location"}</p>
           <p class="card-meta">${fmtRange(comp.start_date, comp.end_date)}</p>
+          ${relativeWindow ? `<p class="card-meta">${relativeWindow}</p>` : ""}
           <p class="card-meta">${comp.notes || ""}</p>
           <div class="action-row" style="margin-top:12px;">
             ${comp.active
@@ -139,8 +198,8 @@ export async function renderCompetitions(container) {
       </div>
       <div class="form-section"><label class="form-label">Name</label><input class="form-input" id="c-name" value="${existing?.name || ""}"></div>
       <div class="form-section"><label class="form-label">Location</label><input class="form-input" id="c-location" value="${existing?.location || ""}"></div>
-      <div class="form-section"><label class="form-label">Start Date</label><input class="form-input" id="c-start" type="date" value="${existing?.start_date ? new Date(existing.start_date).toISOString().slice(0, 10) : ""}"></div>
-      <div class="form-section"><label class="form-label">End Date</label><input class="form-input" id="c-end" type="date" value="${existing?.end_date ? new Date(existing.end_date).toISOString().slice(0, 10) : ""}"></div>
+      <div class="form-section"><label class="form-label">Start Date</label><input class="form-input" id="c-start" type="date" value="${toDateOnly(existing?.start_date)}"></div>
+      <div class="form-section"><label class="form-label">End Date</label><input class="form-input" id="c-end" type="date" value="${toDateOnly(existing?.end_date)}"></div>
       <div class="form-section"><label class="form-label">Notes</label><textarea class="form-input form-textarea" id="c-notes">${existing?.notes || ""}</textarea></div>
       <button class="btn-primary btn-full" id="save-comp-btn">${existing ? "Save" : "Create"}</button>
       <div class="form-error" id="comp-err"></div>
