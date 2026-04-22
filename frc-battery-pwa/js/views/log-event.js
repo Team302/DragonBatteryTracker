@@ -90,27 +90,27 @@ export async function renderLogEvent(container, { id }) {
           ${beakMode === "single" ? `
             <div class="form-section">
               <label class="form-label" for="f-v0">Voltage (0A)</label>
-              <input class="form-input" id="f-v0" type="number" step="0.001" min="0" max="20" placeholder="12.800">
+              <input class="form-input" id="f-v0" type="text" inputmode="decimal" placeholder="12.800" autocomplete="off" enterkeyhint="next">
             </div>
           ` : `
             <div class="form-section">
               <label class="form-label" for="f-v0">0A - resting / open circuit</label>
-              <input class="form-input" id="f-v0" type="number" step="0.001" min="0" max="20" placeholder="12.840">
+              <input class="form-input" id="f-v0" type="text" inputmode="decimal" placeholder="12.840" autocomplete="off" enterkeyhint="next">
             </div>
             <div class="form-section">
               <label class="form-label" for="f-v1">1A - light load</label>
-              <input class="form-input" id="f-v1" type="number" step="0.001" min="0" max="20" placeholder="12.710">
+              <input class="form-input" id="f-v1" type="text" inputmode="decimal" placeholder="12.710" autocomplete="off" enterkeyhint="next">
             </div>
             <div class="form-section">
               <label class="form-label" for="f-v18">18A - full load</label>
-              <input class="form-input" id="f-v18" type="number" step="0.001" min="0" max="20" placeholder="11.930">
+              <input class="form-input" id="f-v18" type="text" inputmode="decimal" placeholder="11.930" autocomplete="off" enterkeyhint="next">
             </div>
           `}
         ` : ""}
         ${showIR ? `
           <div class="form-section">
             <label class="form-label" for="f-ir">Internal Resistance (Ω)</label>
-            <input class="form-input" id="f-ir" type="number" step="0.001" min="0" placeholder="0.010">
+            <input class="form-input" id="f-ir" type="text" inputmode="decimal" placeholder="0.010" autocomplete="off" enterkeyhint="next">
           </div>
         ` : ""}
         ${showAmpHours ? `
@@ -145,13 +145,13 @@ export async function renderLogEvent(container, { id }) {
         ${showChargePercent ? `
           <div class="form-section">
             <label class="form-label" for="f-charge-percent">Charge % <span class="optional">(optional)</span></label>
-            <input class="form-input" id="f-charge-percent" type="number" step="0.1" min="0" max="100" placeholder="85">
+            <input class="form-input" id="f-charge-percent" type="text" inputmode="decimal" placeholder="85" autocomplete="off" enterkeyhint="next">
           </div>
         ` : ""}
         ${showMatch ? `
           <div class="form-section">
             <label class="form-label" for="f-match">Match Number</label>
-            <input class="form-input" id="f-match" type="number" min="1" placeholder="1">
+            <input class="form-input" id="f-match" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="1" autocomplete="off" enterkeyhint="done">
           </div>
         ` : ""}
         ${showCompetition ? `

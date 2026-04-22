@@ -27,9 +27,16 @@ export async function renderRotation(container) {
   let batteries = [];
   let activeCompetitionName = null;
   let selectedBattery = null;
+  let hasActiveCompetition = false;
 
   try {
-    const [allBatteries] = await Promise.all([api.listBatteries(false)]);
+    const [allBatteries, summaries, activeCompetition] = await Promise.all([
+      api.listBatteries(false),
+      api.getDashboard().catch(() => []),
+      api.getActiveCompetition().catch(() => null),
+    ]);
+    const summaryByBatteryId = new Map(summaries.map((summary) => [summary.battery.id, summary]));
+
     batteries = await Promise.all(
       allBatteries.map(async (b) => {
         let events = [];
@@ -39,19 +46,18 @@ export async function renderRotation(container) {
           events = [];
         }
         const beak = events[0];
+        const summary = summaryByBatteryId.get(b.id);
         return {
           ...b,
           latest_ir: beak?.internal_resistance ?? null,
           latest_voltage: beak?.voltage_0a ?? beak?.voltage ?? null,
+          charge_cycles: summary?.charge_cycles ?? 0,
+          competition_charge_cycles: summary?.competition_charge_cycles ?? 0,
         };
       })
     );
-    try {
-      const comp = await api.getActiveCompetition();
-      activeCompetitionName = comp.name;
-    } catch {
-      activeCompetitionName = null;
-    }
+    activeCompetitionName = activeCompetition?.name ?? null;
+    hasActiveCompetition = Boolean(activeCompetition);
     await renderBoard();
   } catch (e) {
     document.getElementById("rotation-board").innerHTML = `<div class="error-msg">${e.message}</div>`;
@@ -85,17 +91,32 @@ export async function renderRotation(container) {
     const inLane = batteries.filter((b) => !b.retired && b.rotation_status === status);
     const retired = status === "ready" ? batteries.filter((b) => b.retired) : [];
 
-    const laneCards = [...inLane, ...retired].map((b) => `
+    const laneCards = [...inLane, ...retired].map((b) => {
+      const chargeCount = hasActiveCompetition ? b.competition_charge_cycles : b.charge_cycles;
+      const chargeTone = chargeCount >= 3 ? "late" : chargeCount >= 2 ? "mid" : "early";
+      const chargeTitle = hasActiveCompetition
+        ? `Charge cycle ${chargeCount} during the active competition`
+        : `Total logged charge cycles: ${chargeCount}`;
+      const markers = [
+        b.comp_battery ? '<span class="battery-marker battery-marker-comp" title="Comp battery">🏆</span>' : "",
+        (b.bad_cells || b.retired)
+          ? `<span class="battery-marker battery-marker-bad" title="${b.retired ? "Retired battery" : "Battery has bad cells"}">☠</span>`
+          : "",
+        `<span class="battery-charge-badge battery-charge-${chargeTone}" title="${chargeTitle}">Charge ${chargeCount}</span>`,
+      ].join("");
+
+      return `
       <button class="battery-card rotation-card ${b.retired ? "rotation-retired" : ""}" data-id="${b.id}">
         <div class="card-left">
           <div class="card-info">
-            <span class="card-label">${b.label}</span>
+            <span class="card-label battery-label">${b.label}${markers}</span>
             <span class="card-meta">${b.latest_ir ? b.latest_ir.toFixed(3) : "-"}Ω · ${b.latest_voltage ?? "-"}V</span>
             <span class="card-meta">${b.retired ? "RETIRED" : "Tap to move"}</span>
           </div>
         </div>
       </button>
-    `).join("");
+    `;
+    }).join("");
 
     return `
       <section class="chart-section rotation-lane">

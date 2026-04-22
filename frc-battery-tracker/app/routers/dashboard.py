@@ -85,9 +85,7 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
             summary.competition_match_uses = competition_counts.get("match", 0)
             summary.competition_charge_cycles = competition_charge_result.scalar() or 0
 
-    # Sort: bad first, then fair, then good, then unknown
-    order = {"bad": 0, "fair": 1, "good": 2, "unknown": 3}
-    summaries.sort(key=lambda s: order[s.status])
+    summaries.sort(key=lambda s: s.battery.label, reverse=True)
     return summaries
 
 
