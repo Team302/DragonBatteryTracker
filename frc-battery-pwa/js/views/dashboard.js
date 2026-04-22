@@ -100,13 +100,19 @@ function renderList(summaries) {
     const irDisplay = s.latest_ir != null ? `${s.latest_ir.toFixed(3)} Ω` : "—";
     const vDisplay = s.latest_voltage != null ? `${s.latest_voltage}V` : "—";
     const dot = { good: "🟢", fair: "🟡", bad: "🔴", unknown: "⚪" }[s.status] || "⚪";
+    const markers = [
+      s.battery.comp_battery ? '<span class="battery-marker battery-marker-comp" title="Comp battery">🏆</span>' : "",
+      (s.battery.bad_cells || s.battery.retired)
+        ? `<span class="battery-marker battery-marker-bad" title="${s.battery.retired ? "Retired battery" : "Battery has bad cells"}">☠</span>`
+        : "",
+    ].join("");
 
     return `
       <button class="battery-card status-${statusClass}" data-id="${s.battery.id}">
         <div class="card-left">
           <span class="status-dot">${dot}</span>
           <div class="card-info">
-            <span class="card-label">${s.battery.label}</span>
+            <span class="card-label battery-label">${s.battery.label}${markers}</span>
             <span class="card-meta">${s.match_uses} matches · ${s.charge_cycles} charges</span>
           </div>
         </div>

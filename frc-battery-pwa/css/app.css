@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap');
 
 /* ── Variables ─────────────────────────────────────────────────── */
 :root {
@@ -131,7 +131,52 @@ input, textarea { font: inherit; color: inherit; }
 
 .card-left { display: flex; align-items: center; gap: 12px; }
 .status-dot { font-size: 16px; }
-.card-label { font-family: 'Space Mono', monospace; font-size: 15px; font-weight: 700; display: block; }
+.card-label { font-size: 15px; font-weight: 700; display: block; }
+.battery-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.battery-label,
+#batt-title,
+.form-battery-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.battery-marker {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  line-height: 1;
+}
+.battery-marker-comp { color: var(--warn); }
+.battery-marker-bad { color: var(--danger); }
+.battery-charge-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 58px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+.battery-charge-early {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+.battery-charge-mid {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+.battery-charge-late {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
 .card-meta  { font-size: 12px; color: var(--text-2); margin-top: 2px; display: block; }
 .card-right { text-align: right; }
 .card-ir    { font-family: 'Space Mono', monospace; font-size: 15px; font-weight: 700; display: block; }
@@ -226,7 +271,6 @@ input, textarea { font: inherit; color: inherit; }
 
 /* ── Forms ──────────────────────────────────────────────────────── */
 .form-battery-label {
-  font-family: 'Space Mono', monospace;
   font-size: 20px; font-weight: 700;
   margin-bottom: 20px;
   color: var(--accent);

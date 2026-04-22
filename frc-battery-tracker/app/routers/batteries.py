@@ -87,12 +87,15 @@ async def export_batteries_csv(db: AsyncSession = Depends(get_db)):
 async def export_events_csv(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Event).order_by(Event.created_at.desc()))
     events = result.scalars().all()
+    batteries_result = await db.execute(select(Battery.id, Battery.label))
+    battery_labels = {row.id: row.label for row in batteries_result}
 
     output = StringIO()
     writer = csv.writer(output)
     writer.writerow([
         "id",
         "battery_id",
+        "battery_label",
         "event_type",
         "created_at",
         "tested_on",
@@ -116,6 +119,7 @@ async def export_events_csv(db: AsyncSession = Depends(get_db)):
         writer.writerow([
             e.id,
             e.battery_id,
+            battery_labels.get(e.battery_id, ""),
             e.event_type,
             e.created_at.isoformat() if e.created_at else "",
             e.tested_on.isoformat() if e.tested_on else "",
